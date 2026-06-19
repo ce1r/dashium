@@ -5,6 +5,7 @@ mod backupGJAccountNew;
 mod getAccountURL;
 mod loginGJAccount;
 mod registerGJAccount;
+mod syncGJAccountNew;
 
 pub fn routes() -> Router {
     Router::new()
@@ -21,4 +22,8 @@ pub fn routes() -> Router {
             post(backupGJAccountNew::backupGJAccountNew),
         )
         .route("/getAccountURL.php", post(getAccountURL::getAccountURL))
+        .route(
+            "/database/accounts/syncGJAccountNew.php",
+            post(syncGJAccountNew::syncGJAccountNew),
+        )
 }

@@ -45,3 +45,9 @@ UPDATE users
 SET save_data = :save_data
 WHERE id = :user_id
     AND gjp2 = :gjp2;
+
+--! load_data
+SELECT save_data
+FROM users
+WHERE id = :user_id
+    AND gjp2 = :gjp2;
