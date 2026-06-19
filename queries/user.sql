@@ -19,3 +19,17 @@ SELECT
     created_at
 FROM users
 WHERE username = :username;
+
+--! is_username_taken
+SELECT EXISTS (
+    SELECT 1
+    FROM users
+    WHERE username ILIKE :username
+);
+
+--! is_email_taken
+SELECT EXISTS (
+    SELECT 1
+    FROM users
+    WHERE email ILIKE :email
+);
