@@ -39,3 +39,9 @@ SELECT id
 FROM users
 WHERE username = :username
     AND gjp2 = :gjp2;
+
+--! save_data
+UPDATE users
+SET save_data = :save_data
+WHERE id = :user_id
+    AND gjp2 = :gjp2;

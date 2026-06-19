@@ -1,6 +1,8 @@
 use axum::Router;
 use axum::routing::post;
 
+mod backupGJAccountNew;
+mod getAccountURL;
 mod loginGJAccount;
 mod registerGJAccount;
 
@@ -14,4 +16,9 @@ pub fn routes() -> Router {
             "/accounts/loginGJAccount.php",
             post(loginGJAccount::loginGJAccount),
         )
+        .route(
+            "/database/accounts/backupGJAccountNew.php",
+            post(backupGJAccountNew::backupGJAccountNew),
+        )
+        .route("/getAccountURL.php", post(getAccountURL::getAccountURL))
 }
