@@ -6,6 +6,11 @@ pub struct CreateUserParams<T1: crate::StringSql, T2: crate::StringSql, T3: crat
     pub email: T2,
     pub gjp2: T3,
 }
+#[derive(Debug)]
+pub struct VerifyGjp2Params<T1: crate::StringSql, T2: crate::StringSql> {
+    pub username: T1,
+    pub gjp2: T2,
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct User {
     pub id: i32,
@@ -116,6 +121,70 @@ where
 {
     pub fn map<R>(self, mapper: fn(bool) -> R) -> BoolQuery<'c, 'a, 's, C, R, N> {
         BoolQuery {
+            client: self.client,
+            params: self.params,
+            query: self.query,
+            cached: self.cached,
+            extractor: self.extractor,
+            mapper,
+        }
+    }
+    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
+        let row =
+            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
+        Ok((self.mapper)((self.extractor)(&row)?))
+    }
+    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
+        self.iter().await?.try_collect().await
+    }
+    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
+        let opt_row =
+            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
+        Ok(opt_row
+            .map(|row| {
+                let extracted = (self.extractor)(&row)?;
+                Ok((self.mapper)(extracted))
+            })
+            .transpose()?)
+    }
+    pub async fn iter(
+        self,
+    ) -> Result<
+        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
+        tokio_postgres::Error,
+    > {
+        let stream = crate::client::async_::raw(
+            self.client,
+            self.query,
+            crate::slice_iter(&self.params),
+            self.cached,
+        )
+        .await?;
+        let mapped = stream
+            .map(move |res| {
+                res.and_then(|row| {
+                    let extracted = (self.extractor)(&row)?;
+                    Ok((self.mapper)(extracted))
+                })
+            })
+            .into_stream();
+        Ok(mapped)
+    }
+}
+pub struct I32Query<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+    client: &'c C,
+    params: [&'a (dyn postgres_types::ToSql + Sync); N],
+    query: &'static str,
+    cached: Option<&'s tokio_postgres::Statement>,
+    extractor: fn(&tokio_postgres::Row) -> Result<i32, tokio_postgres::Error>,
+    mapper: fn(i32) -> T,
+}
+impl<'c, 'a, 's, C, T: 'c, const N: usize> I32Query<'c, 'a, 's, C, T, N>
+where
+    C: GenericClient,
+{
+    pub fn map<R>(self, mapper: fn(i32) -> R) -> I32Query<'c, 'a, 's, C, R, N> {
+        I32Query {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -322,5 +391,54 @@ impl IsEmailTakenStmt {
             extractor: |row| Ok(row.try_get(0)?),
             mapper: |it| it,
         }
+    }
+}
+pub struct VerifyGjp2Stmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn verify_gjp2() -> VerifyGjp2Stmt {
+    VerifyGjp2Stmt(
+        "SELECT id FROM users WHERE username = $1 AND gjp2 = $2",
+        None,
+    )
+}
+impl VerifyGjp2Stmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>(
+        &'s self,
+        client: &'c C,
+        username: &'a T1,
+        gjp2: &'a T2,
+    ) -> I32Query<'c, 'a, 's, C, i32, 2> {
+        I32Query {
+            client,
+            params: [username, gjp2],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |row| Ok(row.try_get(0)?),
+            mapper: |it| it,
+        }
+    }
+}
+impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>
+    crate::client::async_::Params<
+        'c,
+        'a,
+        's,
+        VerifyGjp2Params<T1, T2>,
+        I32Query<'c, 'a, 's, C, i32, 2>,
+        C,
+    > for VerifyGjp2Stmt
+{
+    fn params(
+        &'s self,
+        client: &'c C,
+        params: &'a VerifyGjp2Params<T1, T2>,
+    ) -> I32Query<'c, 'a, 's, C, i32, 2> {
+        self.bind(client, &params.username, &params.gjp2)
     }
 }

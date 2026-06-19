@@ -33,3 +33,9 @@ SELECT EXISTS (
     FROM users
     WHERE email ILIKE :email
 );
+
+--! verify_gjp2
+SELECT id
+FROM users
+WHERE username = :username
+    AND gjp2 = :gjp2;
