@@ -11,6 +11,12 @@ pub struct VerifyGjp2Params<T1: crate::StringSql, T2: crate::StringSql> {
     pub username: T1,
     pub gjp2: T2,
 }
+#[derive(Debug)]
+pub struct SaveDataParams<T1: crate::StringSql, T2: crate::StringSql> {
+    pub save_data: T1,
+    pub user_id: i32,
+    pub gjp2: T2,
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct User {
     pub id: i32,
@@ -440,5 +446,52 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>
         params: &'a VerifyGjp2Params<T1, T2>,
     ) -> I32Query<'c, 'a, 's, C, i32, 2> {
         self.bind(client, &params.username, &params.gjp2)
+    }
+}
+pub struct SaveDataStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn save_data() -> SaveDataStmt {
+    SaveDataStmt(
+        "UPDATE users SET save_data = $1 WHERE id = $2 AND gjp2 = $3",
+        None,
+    )
+}
+impl SaveDataStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub async fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>(
+        &'s self,
+        client: &'c C,
+        save_data: &'a T1,
+        user_id: &'a i32,
+        gjp2: &'a T2,
+    ) -> Result<u64, tokio_postgres::Error> {
+        client.execute(self.0, &[save_data, user_id, gjp2]).await
+    }
+}
+impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql, T2: crate::StringSql>
+    crate::client::async_::Params<
+        'a,
+        'a,
+        'a,
+        SaveDataParams<T1, T2>,
+        std::pin::Pin<
+            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+        >,
+        C,
+    > for SaveDataStmt
+{
+    fn params(
+        &'a self,
+        client: &'a C,
+        params: &'a SaveDataParams<T1, T2>,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+    > {
+        Box::pin(self.bind(client, &params.save_data, &params.user_id, &params.gjp2))
     }
 }
