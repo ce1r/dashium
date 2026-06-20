@@ -138,3 +138,28 @@ SET
     tiktok = :tiktok
 WHERE id = :user_id
     AND gjp2 = :gjp2;
+
+--! search_users
+SELECT
+    id,
+    username,
+
+    stars,
+    demons,
+    creator_points,
+    diamonds,
+    moons,
+    secret_coins,
+    user_coins,
+
+    glow,
+    icon,
+    icon_type,
+
+    color1,
+    color2,
+    color3
+FROM users
+WHERE username ILIKE '%' || :search || '%'
+    AND id <> :user_id
+LIMIT 10 OFFSET :offset;

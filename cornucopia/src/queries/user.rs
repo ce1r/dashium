@@ -76,6 +76,12 @@ pub struct UpdateSettingsParams<
     pub user_id: i32,
     pub gjp2: T7,
 }
+#[derive(Debug)]
+pub struct SearchUsersParams<T1: crate::StringSql> {
+    pub search: T1,
+    pub user_id: i32,
+    pub offset: i64,
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct GetUser {
     pub id: i32,
@@ -231,6 +237,80 @@ impl<'a> From<GetUserBorrowed<'a>> for GetUser {
             discord: discord.into(),
             instagram: instagram.into(),
             tiktok: tiktok.into(),
+        }
+    }
+}
+#[derive(Debug, Clone, PartialEq)]
+pub struct SearchUsers {
+    pub id: i32,
+    pub username: String,
+    pub stars: i32,
+    pub demons: i32,
+    pub creator_points: i32,
+    pub diamonds: i32,
+    pub moons: i32,
+    pub secret_coins: i32,
+    pub user_coins: i32,
+    pub glow: i16,
+    pub icon: i16,
+    pub icon_type: i16,
+    pub color1: i16,
+    pub color2: i16,
+    pub color3: i16,
+}
+pub struct SearchUsersBorrowed<'a> {
+    pub id: i32,
+    pub username: &'a str,
+    pub stars: i32,
+    pub demons: i32,
+    pub creator_points: i32,
+    pub diamonds: i32,
+    pub moons: i32,
+    pub secret_coins: i32,
+    pub user_coins: i32,
+    pub glow: i16,
+    pub icon: i16,
+    pub icon_type: i16,
+    pub color1: i16,
+    pub color2: i16,
+    pub color3: i16,
+}
+impl<'a> From<SearchUsersBorrowed<'a>> for SearchUsers {
+    fn from(
+        SearchUsersBorrowed {
+            id,
+            username,
+            stars,
+            demons,
+            creator_points,
+            diamonds,
+            moons,
+            secret_coins,
+            user_coins,
+            glow,
+            icon,
+            icon_type,
+            color1,
+            color2,
+            color3,
+        }: SearchUsersBorrowed<'a>,
+    ) -> Self {
+        Self {
+            id,
+            username: username.into(),
+            stars,
+            demons,
+            creator_points,
+            diamonds,
+            moons,
+            secret_coins,
+            user_coins,
+            glow,
+            icon,
+            icon_type,
+            color1,
+            color2,
+            color3,
         }
     }
 }
@@ -506,6 +586,73 @@ where
 {
     pub fn map<R>(self, mapper: fn(i16) -> R) -> I16Query<'c, 'a, 's, C, R, N> {
         I16Query {
+            client: self.client,
+            params: self.params,
+            query: self.query,
+            cached: self.cached,
+            extractor: self.extractor,
+            mapper,
+        }
+    }
+    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
+        let row =
+            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
+        Ok((self.mapper)((self.extractor)(&row)?))
+    }
+    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
+        self.iter().await?.try_collect().await
+    }
+    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
+        let opt_row =
+            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
+        Ok(opt_row
+            .map(|row| {
+                let extracted = (self.extractor)(&row)?;
+                Ok((self.mapper)(extracted))
+            })
+            .transpose()?)
+    }
+    pub async fn iter(
+        self,
+    ) -> Result<
+        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
+        tokio_postgres::Error,
+    > {
+        let stream = crate::client::async_::raw(
+            self.client,
+            self.query,
+            crate::slice_iter(&self.params),
+            self.cached,
+        )
+        .await?;
+        let mapped = stream
+            .map(move |res| {
+                res.and_then(|row| {
+                    let extracted = (self.extractor)(&row)?;
+                    Ok((self.mapper)(extracted))
+                })
+            })
+            .into_stream();
+        Ok(mapped)
+    }
+}
+pub struct SearchUsersQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+    client: &'c C,
+    params: [&'a (dyn postgres_types::ToSql + Sync); N],
+    query: &'static str,
+    cached: Option<&'s tokio_postgres::Statement>,
+    extractor: fn(&tokio_postgres::Row) -> Result<SearchUsersBorrowed, tokio_postgres::Error>,
+    mapper: fn(SearchUsersBorrowed) -> T,
+}
+impl<'c, 'a, 's, C, T: 'c, const N: usize> SearchUsersQuery<'c, 'a, 's, C, T, N>
+where
+    C: GenericClient,
+{
+    pub fn map<R>(
+        self,
+        mapper: fn(SearchUsersBorrowed) -> R,
+    ) -> SearchUsersQuery<'c, 'a, 's, C, R, N> {
+        SearchUsersQuery {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -1168,5 +1315,74 @@ impl<
             &params.user_id,
             &params.gjp2,
         ))
+    }
+}
+pub struct SearchUsersStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn search_users() -> SearchUsersStmt {
+    SearchUsersStmt(
+        "SELECT id, username, stars, demons, creator_points, diamonds, moons, secret_coins, user_coins, glow, icon, icon_type, color1, color2, color3 FROM users WHERE username ILIKE '%' || $1 || '%' AND id <> $2 LIMIT 10 OFFSET $3",
+        None,
+    )
+}
+impl SearchUsersStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+        &'s self,
+        client: &'c C,
+        search: &'a T1,
+        user_id: &'a i32,
+        offset: &'a i64,
+    ) -> SearchUsersQuery<'c, 'a, 's, C, SearchUsers, 3> {
+        SearchUsersQuery {
+            client,
+            params: [search, user_id, offset],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor:
+                |row: &tokio_postgres::Row| -> Result<SearchUsersBorrowed, tokio_postgres::Error> {
+                    Ok(SearchUsersBorrowed {
+                        id: row.try_get(0)?,
+                        username: row.try_get(1)?,
+                        stars: row.try_get(2)?,
+                        demons: row.try_get(3)?,
+                        creator_points: row.try_get(4)?,
+                        diamonds: row.try_get(5)?,
+                        moons: row.try_get(6)?,
+                        secret_coins: row.try_get(7)?,
+                        user_coins: row.try_get(8)?,
+                        glow: row.try_get(9)?,
+                        icon: row.try_get(10)?,
+                        icon_type: row.try_get(11)?,
+                        color1: row.try_get(12)?,
+                        color2: row.try_get(13)?,
+                        color3: row.try_get(14)?,
+                    })
+                },
+            mapper: |it| SearchUsers::from(it),
+        }
+    }
+}
+impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
+    crate::client::async_::Params<
+        'c,
+        'a,
+        's,
+        SearchUsersParams<T1>,
+        SearchUsersQuery<'c, 'a, 's, C, SearchUsers, 3>,
+        C,
+    > for SearchUsersStmt
+{
+    fn params(
+        &'s self,
+        client: &'c C,
+        params: &'a SearchUsersParams<T1>,
+    ) -> SearchUsersQuery<'c, 'a, 's, C, SearchUsers, 3> {
+        self.bind(client, &params.search, &params.user_id, &params.offset)
     }
 }

@@ -4,6 +4,7 @@ use axum::routing::post;
 mod backupGJAccountNew;
 mod getAccountURL;
 mod getGJUserInfo20;
+mod getGJUsers20;
 mod loginGJAccount;
 mod registerGJAccount;
 mod requestUserAccess;
@@ -46,4 +47,5 @@ pub fn routes() -> Router {
             "/updateGJAccSettings20.php",
             post(updateGJAccSettings20::updateGJAccSettings20),
         )
+        .route("/getGJUsers20.php", post(getGJUsers20::getGJUsers20))
 }
