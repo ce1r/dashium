@@ -11,3 +11,9 @@ pub fn salt_and_sha1(input: &str, salt: &str) -> String {
     hasher.update(salt.as_bytes());
     hex::encode(hasher.finalize())
 }
+
+pub fn cyclic_xor(data: &mut [u8], key: &[u8]) {
+    for (i, byte) in data.iter_mut().enumerate() {
+        *byte ^= key[i % key.len()];
+    }
+}

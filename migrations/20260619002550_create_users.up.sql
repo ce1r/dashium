@@ -6,6 +6,7 @@ CREATE TABLE users (
     save_data TEXT NOT NULL DEFAULT '',
     is_activated BOOLEAN NOT NULL DEFAULT TRUE,
     mod_level SMALLINT NOT NULL DEFAULT 0,
+    udid TEXT NOT NULL DEFAULT '',
 
     stars INTEGER NOT NULL DEFAULT 0,
     demons INTEGER NOT NULL DEFAULT 0,
