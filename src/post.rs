@@ -1,6 +1,7 @@
 use axum::Router;
 use axum::routing::post;
 
+mod deleteGJAccComment20;
 mod getGJAccountComments20;
 mod uploadGJAccComment20;
 
@@ -13,5 +14,9 @@ pub fn routes() -> Router {
         .route(
             "/getGJAccountComments20.php",
             post(getGJAccountComments20::getGJAccountComments20),
+        )
+        .route(
+            "/deleteGJAccComment20.php",
+            post(deleteGJAccComment20::deleteGJAccComment20),
         )
 }

@@ -17,3 +17,10 @@ FROM posts
 WHERE user_id = :user_id
 ORDER BY created_at DESC
 LIMIT 10 OFFSET :offset;
+
+--! delete_post
+DELETE FROM posts
+USING users
+WHERE posts.id = :post_id
+    AND posts.user_id = users.id
+    AND users.gjp2 = :gjp2;
