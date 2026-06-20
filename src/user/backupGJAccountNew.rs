@@ -12,10 +12,10 @@ pub struct Data {
 }
 
 pub async fn backupGJAccountNew(Form(form): Form<Data>) -> Result<String> {
-    let client = &Database::acquire().await?;
+    let client = Database::acquire().await?;
 
     save_data()
-        .bind(client, &form.saveData, &form.accountID, &form.gjp2)
+        .bind(&client, &form.saveData, &form.accountID, &form.gjp2)
         .await?;
 
     Ok("1".to_string())

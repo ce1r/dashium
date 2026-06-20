@@ -1,5 +1,3 @@
---: User(id, username, email, created_at)
-
 --! create_user
 INSERT INTO users (
     username,
@@ -11,14 +9,51 @@ INSERT INTO users (
     :gjp2
 );
 
---! get_user_by_username : User
+--! get_user
 SELECT
     id,
     username,
-    email,
-    created_at
+    is_activated,
+    mod_level,
+
+    stars,
+    demons,
+    creator_points,
+    diamonds,
+    moons,
+    secret_coins,
+    user_coins,
+
+    cube,
+    ship,
+    ball,
+    ufo,
+    wave,
+    robot,
+    spider,
+    swing,
+    jetpack,
+    glow,
+    explosion,
+    icon,
+    icon_type,
+
+    color1,
+    color2,
+    color3,
+
+    message_setting,
+    friend_setting,
+    comment_setting,
+
+    youtube,
+    twitter,
+    twitch,
+    discord,
+    instagram,
+    tiktok
 FROM users
-WHERE username = :username;
+WHERE id = :id;
 
 --! is_username_taken
 SELECT EXISTS (

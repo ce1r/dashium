@@ -11,10 +11,10 @@ pub struct Data {
 }
 
 pub async fn loginGJAccount(Form(form): Form<Data>) -> Result<String> {
-    let client = &Database::acquire().await?;
+    let client = Database::acquire().await?;
 
     let user_id = verify_gjp2()
-        .bind(client, &form.userName, &form.gjp2)
+        .bind(&client, &form.userName, &form.gjp2)
         .opt()
         .await?;
 
