@@ -25,15 +25,18 @@ macro_rules! gd_format {
         String::new()
     };
 
-    ($($key:literal => $value:expr),+ $(,)?) => {{
+    ($delim:literal, $($key:literal => $value:expr),+ $(,)?) => {{
         let mut s = String::new();
 
         $(
             if !s.is_empty() {
-                s.push(':');
+                s.push_str($delim);
             }
 
-            let _ = ::std::fmt::Write::write_fmt(&mut s, format_args!("{}:{}", $key, $value));
+            let _ = ::core::fmt::Write::write_fmt(
+                &mut s,
+                format_args!("{}{}{}", $key, $delim, $value)
+            );
         )*
 
         s

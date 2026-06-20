@@ -19,6 +19,7 @@ pub async fn getGJUserInfo20(Form(form): Form<Data>) -> Result<String> {
         .await?;
 
     let response = gd_format!(
+        ":",
         1 => user.username,
         2 => user.id,
         3 => user.stars,
