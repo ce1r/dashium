@@ -11,6 +11,11 @@ pub struct GetPostsParams {
     pub user_id: i32,
     pub offset: i64,
 }
+#[derive(Debug)]
+pub struct DeletePostParams<T1: crate::StringSql> {
+    pub post_id: i32,
+    pub gjp2: T1,
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct GetPosts {
     pub id: i32,
@@ -281,5 +286,51 @@ impl<'c, 'a, 's, C: GenericClient>
         params: &'a GetPostsParams,
     ) -> GetPostsQuery<'c, 'a, 's, C, GetPosts, 2> {
         self.bind(client, &params.user_id, &params.offset)
+    }
+}
+pub struct DeletePostStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn delete_post() -> DeletePostStmt {
+    DeletePostStmt(
+        "DELETE FROM posts USING users WHERE posts.id = $1 AND posts.user_id = users.id AND users.gjp2 = $2",
+        None,
+    )
+}
+impl DeletePostStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub async fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+        &'s self,
+        client: &'c C,
+        post_id: &'a i32,
+        gjp2: &'a T1,
+    ) -> Result<u64, tokio_postgres::Error> {
+        client.execute(self.0, &[post_id, gjp2]).await
+    }
+}
+impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql>
+    crate::client::async_::Params<
+        'a,
+        'a,
+        'a,
+        DeletePostParams<T1>,
+        std::pin::Pin<
+            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+        >,
+        C,
+    > for DeletePostStmt
+{
+    fn params(
+        &'a self,
+        client: &'a C,
+        params: &'a DeletePostParams<T1>,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+    > {
+        Box::pin(self.bind(client, &params.post_id, &params.gjp2))
     }
 }
