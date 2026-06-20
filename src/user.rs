@@ -7,6 +7,7 @@ mod getGJUserInfo20;
 mod loginGJAccount;
 mod registerGJAccount;
 mod syncGJAccountNew;
+mod updateGJUserScore22;
 
 pub fn routes() -> Router {
     Router::new()
@@ -30,5 +31,9 @@ pub fn routes() -> Router {
         .route(
             "/getGJUserInfo20.php",
             post(getGJUserInfo20::getGJUserInfo20),
+        )
+        .route(
+            "/updateGJUserScore22.php",
+            post(updateGJUserScore22::updateGJUserScore22),
         )
 }

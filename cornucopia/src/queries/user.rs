@@ -22,6 +22,33 @@ pub struct LoadDataParams<T1: crate::StringSql> {
     pub user_id: i32,
     pub gjp2: T1,
 }
+#[derive(Debug)]
+pub struct SaveStatsParams<T1: crate::StringSql> {
+    pub stars: i32,
+    pub demons: i32,
+    pub diamonds: i32,
+    pub moons: i32,
+    pub secret_coins: i32,
+    pub user_coins: i32,
+    pub cube: i16,
+    pub ship: i16,
+    pub ball: i16,
+    pub ufo: i16,
+    pub wave: i16,
+    pub robot: i16,
+    pub spider: i16,
+    pub swing: i16,
+    pub jetpack: i16,
+    pub glow: i16,
+    pub explosion: i16,
+    pub icon: i16,
+    pub icon_type: i16,
+    pub color1: i16,
+    pub color2: i16,
+    pub color3: i16,
+    pub user_id: i32,
+    pub gjp2: T1,
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct GetUser {
     pub id: i32,
@@ -772,5 +799,127 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
         params: &'a LoadDataParams<T1>,
     ) -> StringQuery<'c, 'a, 's, C, String, 2> {
         self.bind(client, &params.user_id, &params.gjp2)
+    }
+}
+pub struct SaveStatsStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn save_stats() -> SaveStatsStmt {
+    SaveStatsStmt(
+        "UPDATE users SET stars = $1, demons = $2, diamonds = $3, moons = $4, secret_coins = $5, user_coins = $6, cube = $7, ship = $8, ball = $9, ufo = $10, wave = $11, robot = $12, spider = $13, swing = $14, jetpack = $15, glow = $16, explosion = $17, icon = $18, icon_type = $19, color1 = $20, color2 = $21, color3 = $22 WHERE id = $23 AND gjp2 = $24 RETURNING id",
+        None,
+    )
+}
+impl SaveStatsStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+        &'s self,
+        client: &'c C,
+        stars: &'a i32,
+        demons: &'a i32,
+        diamonds: &'a i32,
+        moons: &'a i32,
+        secret_coins: &'a i32,
+        user_coins: &'a i32,
+        cube: &'a i16,
+        ship: &'a i16,
+        ball: &'a i16,
+        ufo: &'a i16,
+        wave: &'a i16,
+        robot: &'a i16,
+        spider: &'a i16,
+        swing: &'a i16,
+        jetpack: &'a i16,
+        glow: &'a i16,
+        explosion: &'a i16,
+        icon: &'a i16,
+        icon_type: &'a i16,
+        color1: &'a i16,
+        color2: &'a i16,
+        color3: &'a i16,
+        user_id: &'a i32,
+        gjp2: &'a T1,
+    ) -> I32Query<'c, 'a, 's, C, i32, 24> {
+        I32Query {
+            client,
+            params: [
+                stars,
+                demons,
+                diamonds,
+                moons,
+                secret_coins,
+                user_coins,
+                cube,
+                ship,
+                ball,
+                ufo,
+                wave,
+                robot,
+                spider,
+                swing,
+                jetpack,
+                glow,
+                explosion,
+                icon,
+                icon_type,
+                color1,
+                color2,
+                color3,
+                user_id,
+                gjp2,
+            ],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |row| Ok(row.try_get(0)?),
+            mapper: |it| it,
+        }
+    }
+}
+impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
+    crate::client::async_::Params<
+        'c,
+        'a,
+        's,
+        SaveStatsParams<T1>,
+        I32Query<'c, 'a, 's, C, i32, 24>,
+        C,
+    > for SaveStatsStmt
+{
+    fn params(
+        &'s self,
+        client: &'c C,
+        params: &'a SaveStatsParams<T1>,
+    ) -> I32Query<'c, 'a, 's, C, i32, 24> {
+        self.bind(
+            client,
+            &params.stars,
+            &params.demons,
+            &params.diamonds,
+            &params.moons,
+            &params.secret_coins,
+            &params.user_coins,
+            &params.cube,
+            &params.ship,
+            &params.ball,
+            &params.ufo,
+            &params.wave,
+            &params.robot,
+            &params.spider,
+            &params.swing,
+            &params.jetpack,
+            &params.glow,
+            &params.explosion,
+            &params.icon,
+            &params.icon_type,
+            &params.color1,
+            &params.color2,
+            &params.color3,
+            &params.user_id,
+            &params.gjp2,
+        )
     }
 }
