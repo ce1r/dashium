@@ -1,20 +1,21 @@
 use crate::Database;
 use crate::Result;
 use axum_extra::extract::Form;
-use cornucopia::queries::user::verify_gjp2;
+use cornucopia::queries::user::login_user;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct Data {
     userName: String,
     gjp2: String,
+    udid: String,
 }
 
 pub async fn loginGJAccount(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
 
-    let user_id = verify_gjp2()
-        .bind(&client, &form.userName, &form.gjp2)
+    let user_id = login_user()
+        .bind(&client, &form.udid, &form.userName, &form.gjp2)
         .opt()
         .await?;
 

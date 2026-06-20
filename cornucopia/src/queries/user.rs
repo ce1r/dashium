@@ -7,9 +7,10 @@ pub struct CreateUserParams<T1: crate::StringSql, T2: crate::StringSql, T3: crat
     pub gjp2: T3,
 }
 #[derive(Debug)]
-pub struct VerifyGjp2Params<T1: crate::StringSql, T2: crate::StringSql> {
-    pub username: T1,
-    pub gjp2: T2,
+pub struct LoginUserParams<T1: crate::StringSql, T2: crate::StringSql, T3: crate::StringSql> {
+    pub udid: T1,
+    pub username: T2,
+    pub gjp2: T3,
 }
 #[derive(Debug)]
 pub struct SaveDataParams<T1: crate::StringSql, T2: crate::StringSql> {
@@ -894,14 +895,14 @@ impl IsEmailTakenStmt {
         }
     }
 }
-pub struct VerifyGjp2Stmt(&'static str, Option<tokio_postgres::Statement>);
-pub fn verify_gjp2() -> VerifyGjp2Stmt {
-    VerifyGjp2Stmt(
-        "SELECT id FROM users WHERE username = $1 AND gjp2 = $2",
+pub struct LoginUserStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn login_user() -> LoginUserStmt {
+    LoginUserStmt(
+        "UPDATE users SET udid = $1 WHERE username = $2 AND gjp2 = $3 RETURNING id",
         None,
     )
 }
-impl VerifyGjp2Stmt {
+impl LoginUserStmt {
     pub async fn prepare<'a, C: GenericClient>(
         mut self,
         client: &'a C,
@@ -909,15 +910,24 @@ impl VerifyGjp2Stmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>(
+    pub fn bind<
+        'c,
+        'a,
+        's,
+        C: GenericClient,
+        T1: crate::StringSql,
+        T2: crate::StringSql,
+        T3: crate::StringSql,
+    >(
         &'s self,
         client: &'c C,
-        username: &'a T1,
-        gjp2: &'a T2,
-    ) -> I32Query<'c, 'a, 's, C, i32, 2> {
+        udid: &'a T1,
+        username: &'a T2,
+        gjp2: &'a T3,
+    ) -> I32Query<'c, 'a, 's, C, i32, 3> {
         I32Query {
             client,
-            params: [username, gjp2],
+            params: [udid, username, gjp2],
             query: self.0,
             cached: self.1.as_ref(),
             extractor: |row| Ok(row.try_get(0)?),
@@ -925,22 +935,22 @@ impl VerifyGjp2Stmt {
         }
     }
 }
-impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>
+impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql, T3: crate::StringSql>
     crate::client::async_::Params<
         'c,
         'a,
         's,
-        VerifyGjp2Params<T1, T2>,
-        I32Query<'c, 'a, 's, C, i32, 2>,
+        LoginUserParams<T1, T2, T3>,
+        I32Query<'c, 'a, 's, C, i32, 3>,
         C,
-    > for VerifyGjp2Stmt
+    > for LoginUserStmt
 {
     fn params(
         &'s self,
         client: &'c C,
-        params: &'a VerifyGjp2Params<T1, T2>,
-    ) -> I32Query<'c, 'a, 's, C, i32, 2> {
-        self.bind(client, &params.username, &params.gjp2)
+        params: &'a LoginUserParams<T1, T2, T3>,
+    ) -> I32Query<'c, 'a, 's, C, i32, 3> {
+        self.bind(client, &params.udid, &params.username, &params.gjp2)
     }
 }
 pub struct SaveDataStmt(&'static str, Option<tokio_postgres::Statement>);

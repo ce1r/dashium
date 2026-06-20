@@ -69,11 +69,12 @@ SELECT EXISTS (
     WHERE email ILIKE :email
 );
 
---! verify_gjp2
-SELECT id
-FROM users
+--! login_user
+UPDATE users
+SET udid = :udid
 WHERE username = :username
-    AND gjp2 = :gjp2;
+    AND gjp2 = :gjp2
+RETURNING id;
 
 --! save_data
 UPDATE users
