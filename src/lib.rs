@@ -7,6 +7,7 @@ mod error;
 mod level;
 mod post;
 mod reward;
+mod social;
 mod user;
 mod util;
 
@@ -23,6 +24,7 @@ pub fn routes() -> Router {
         .merge(post::routes())
         .merge(level::routes())
         .merge(reward::routes())
+        .merge(social::routes())
 }
 
 #[macro_export]
