@@ -86,3 +86,34 @@ SELECT save_data
 FROM users
 WHERE id = :user_id
     AND gjp2 = :gjp2;
+
+--! save_stats
+UPDATE users
+SET
+    stars = :stars,
+    demons = :demons,
+    diamonds = :diamonds,
+    moons = :moons,
+    secret_coins = :secret_coins,
+    user_coins = :user_coins,
+
+    cube = :cube,
+    ship = :ship,
+    ball = :ball,
+    ufo = :ufo,
+    wave = :wave,
+    robot = :robot,
+    spider = :spider,
+    swing = :swing,
+    jetpack = :jetpack,
+    glow = :glow,
+    explosion = :explosion,
+    icon = :icon,
+    icon_type = :icon_type,
+
+    color1 = :color1,
+    color2 = :color2,
+    color3 = :color3
+WHERE id = :user_id
+    AND gjp2 = :gjp2
+RETURNING id;
