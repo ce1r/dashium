@@ -8,6 +8,7 @@ mod loginGJAccount;
 mod registerGJAccount;
 mod requestUserAccess;
 mod syncGJAccountNew;
+mod updateGJAccSettings20;
 mod updateGJUserScore22;
 
 pub fn routes() -> Router {
@@ -40,5 +41,9 @@ pub fn routes() -> Router {
         .route(
             "/requestUserAccess.php",
             post(requestUserAccess::requestUserAccess),
+        )
+        .route(
+            "/updateGJAccSettings20.php",
+            post(updateGJAccSettings20::updateGJAccSettings20),
         )
 }
