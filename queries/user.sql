@@ -123,3 +123,18 @@ SELECT mod_level
 FROM users
 WHERE id = :user_id
     AND gjp2 = :gjp2;
+
+--! update_settings
+UPDATE users
+SET
+    message_setting = :message_setting,
+    friend_setting = :friend_setting,
+    comment_setting = :comment_setting,
+    youtube = :youtube,
+    twitter = :twitter,
+    twitch = :twitch,
+    discord = :discord,
+    instagram = :instagram,
+    tiktok = :tiktok
+WHERE id = :user_id
+    AND gjp2 = :gjp2;

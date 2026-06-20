@@ -54,6 +54,28 @@ pub struct GetModLevelParams<T1: crate::StringSql> {
     pub user_id: i32,
     pub gjp2: T1,
 }
+#[derive(Debug)]
+pub struct UpdateSettingsParams<
+    T1: crate::StringSql,
+    T2: crate::StringSql,
+    T3: crate::StringSql,
+    T4: crate::StringSql,
+    T5: crate::StringSql,
+    T6: crate::StringSql,
+    T7: crate::StringSql,
+> {
+    pub message_setting: i16,
+    pub friend_setting: i16,
+    pub comment_setting: i16,
+    pub youtube: T1,
+    pub twitter: T2,
+    pub twitch: T3,
+    pub discord: T4,
+    pub instagram: T5,
+    pub tiktok: T6,
+    pub user_id: i32,
+    pub gjp2: T7,
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct GetUser {
     pub id: i32,
@@ -1039,5 +1061,112 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
         params: &'a GetModLevelParams<T1>,
     ) -> I16Query<'c, 'a, 's, C, i16, 2> {
         self.bind(client, &params.user_id, &params.gjp2)
+    }
+}
+pub struct UpdateSettingsStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn update_settings() -> UpdateSettingsStmt {
+    UpdateSettingsStmt(
+        "UPDATE users SET message_setting = $1, friend_setting = $2, comment_setting = $3, youtube = $4, twitter = $5, twitch = $6, discord = $7, instagram = $8, tiktok = $9 WHERE id = $10 AND gjp2 = $11",
+        None,
+    )
+}
+impl UpdateSettingsStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub async fn bind<
+        'c,
+        'a,
+        's,
+        C: GenericClient,
+        T1: crate::StringSql,
+        T2: crate::StringSql,
+        T3: crate::StringSql,
+        T4: crate::StringSql,
+        T5: crate::StringSql,
+        T6: crate::StringSql,
+        T7: crate::StringSql,
+    >(
+        &'s self,
+        client: &'c C,
+        message_setting: &'a i16,
+        friend_setting: &'a i16,
+        comment_setting: &'a i16,
+        youtube: &'a T1,
+        twitter: &'a T2,
+        twitch: &'a T3,
+        discord: &'a T4,
+        instagram: &'a T5,
+        tiktok: &'a T6,
+        user_id: &'a i32,
+        gjp2: &'a T7,
+    ) -> Result<u64, tokio_postgres::Error> {
+        client
+            .execute(
+                self.0,
+                &[
+                    message_setting,
+                    friend_setting,
+                    comment_setting,
+                    youtube,
+                    twitter,
+                    twitch,
+                    discord,
+                    instagram,
+                    tiktok,
+                    user_id,
+                    gjp2,
+                ],
+            )
+            .await
+    }
+}
+impl<
+    'a,
+    C: GenericClient + Send + Sync,
+    T1: crate::StringSql,
+    T2: crate::StringSql,
+    T3: crate::StringSql,
+    T4: crate::StringSql,
+    T5: crate::StringSql,
+    T6: crate::StringSql,
+    T7: crate::StringSql,
+>
+    crate::client::async_::Params<
+        'a,
+        'a,
+        'a,
+        UpdateSettingsParams<T1, T2, T3, T4, T5, T6, T7>,
+        std::pin::Pin<
+            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+        >,
+        C,
+    > for UpdateSettingsStmt
+{
+    fn params(
+        &'a self,
+        client: &'a C,
+        params: &'a UpdateSettingsParams<T1, T2, T3, T4, T5, T6, T7>,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+    > {
+        Box::pin(self.bind(
+            client,
+            &params.message_setting,
+            &params.friend_setting,
+            &params.comment_setting,
+            &params.youtube,
+            &params.twitter,
+            &params.twitch,
+            &params.discord,
+            &params.instagram,
+            &params.tiktok,
+            &params.user_id,
+            &params.gjp2,
+        ))
     }
 }
