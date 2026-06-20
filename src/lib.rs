@@ -4,6 +4,7 @@ use axum::Router;
 
 mod database;
 mod error;
+mod post;
 mod user;
 mod util;
 
@@ -15,7 +16,7 @@ pub fn setup() -> Router {
 }
 
 pub fn routes() -> Router {
-    Router::new().merge(user::routes())
+    Router::new().merge(user::routes()).merge(post::routes())
 }
 
 #[macro_export]
