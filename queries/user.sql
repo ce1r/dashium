@@ -117,3 +117,9 @@ SET
 WHERE id = :user_id
     AND gjp2 = :gjp2
 RETURNING id;
+
+--! get_mod_level
+SELECT mod_level
+FROM users
+WHERE id = :user_id
+    AND gjp2 = :gjp2;
