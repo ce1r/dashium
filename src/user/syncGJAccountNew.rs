@@ -11,10 +11,10 @@ pub struct Data {
 }
 
 pub async fn syncGJAccountNew(Form(form): Form<Data>) -> Result<String> {
-    let client = &Database::acquire().await?;
+    let client = Database::acquire().await?;
 
     let save_data = load_data()
-        .bind(client, &form.accountID, &form.gjp2)
+        .bind(&client, &form.accountID, &form.gjp2)
         .one()
         .await?;
 

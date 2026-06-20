@@ -3,6 +3,7 @@ use axum::routing::post;
 
 mod backupGJAccountNew;
 mod getAccountURL;
+mod getGJUserInfo20;
 mod loginGJAccount;
 mod registerGJAccount;
 mod syncGJAccountNew;
@@ -25,5 +26,9 @@ pub fn routes() -> Router {
         .route(
             "/database/accounts/syncGJAccountNew.php",
             post(syncGJAccountNew::syncGJAccountNew),
+        )
+        .route(
+            "/getGJUserInfo20.php",
+            post(getGJUserInfo20::getGJUserInfo20),
         )
 }

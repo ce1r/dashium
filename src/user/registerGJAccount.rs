@@ -36,14 +36,14 @@ pub async fn registerGJAccount(Form(form): Form<Data>) -> Result<String> {
         return Ok("-5".to_string());
     }
 
-    let client = &Database::acquire().await?;
+    let client = Database::acquire().await?;
 
     let username_taken = is_username_taken()
-        .bind(client, &form.userName)
+        .bind(&client, &form.userName)
         .one()
         .await?;
 
-    let email_taken = is_email_taken().bind(client, &form.email).one().await?;
+    let email_taken = is_email_taken().bind(&client, &form.email).one().await?;
 
     if username_taken {
         return Ok("-2".to_string());
@@ -56,7 +56,7 @@ pub async fn registerGJAccount(Form(form): Form<Data>) -> Result<String> {
     let gjp2 = salt_and_sha1(&form.password, "mI29fmAnxgTs");
 
     create_user()
-        .bind(client, &form.userName, &form.email, &gjp2)
+        .bind(&client, &form.userName, &form.email, &gjp2)
         .await?;
 
     Ok("1".to_string())
