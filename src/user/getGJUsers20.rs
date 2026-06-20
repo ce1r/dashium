@@ -7,9 +7,9 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct Data {
-    accountID: i64,
+    accountID: i32,
     str: String,
-    page: i32,
+    page: i64,
 }
 
 pub async fn getGJUsers20(Form(form): Form<Data>) -> Result<String> {
@@ -17,7 +17,7 @@ pub async fn getGJUsers20(Form(form): Form<Data>) -> Result<String> {
     let offset = form.page * 10;
 
     let users = search_users()
-        .bind(&client, &form.str, &offset, &form.accountID)
+        .bind(&client, &form.str, &form.accountID, &offset)
         .all()
         .await?;
 
