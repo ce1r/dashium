@@ -10,6 +10,7 @@ axum = { version = "0.8.9", default-features = false, features = [
     "tokio",
 ] }
 axum-extra = { version = "0.12.6", features = ["form"] }
+base64 = "0.22.1"
 cornucopia = { path = "cornucopia" }
 dotenvy = "0.15.7"
 hex = "0.4.3"
