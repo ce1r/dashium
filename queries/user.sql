@@ -55,20 +55,6 @@ SELECT
 FROM users
 WHERE id = :id;
 
---! is_username_taken
-SELECT EXISTS (
-    SELECT 1
-    FROM users
-    WHERE username ILIKE :username
-);
-
---! is_email_taken
-SELECT EXISTS (
-    SELECT 1
-    FROM users
-    WHERE email ILIKE :email
-);
-
 --! login_user
 UPDATE users
 SET udid = :udid
@@ -162,5 +148,5 @@ SELECT
     color3
 FROM users
 WHERE username ILIKE '%' || :search || '%'
-    AND id <> :user_id
+    AND id != :user_id
 LIMIT 10 OFFSET :offset;

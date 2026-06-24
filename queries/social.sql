@@ -11,12 +11,6 @@ WHERE EXISTS (
     FROM users
     WHERE id = :user_id
         AND gjp2 = :gjp2
-)
-AND NOT EXISTS (
-    SELECT 1
-    FROM blocks
-    WHERE user_id = :user_id
-        AND target_id = :target_id
 );
 
 --! unblock_user
