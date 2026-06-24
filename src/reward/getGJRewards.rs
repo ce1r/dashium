@@ -1,12 +1,13 @@
-use crate::Database;
-use crate::Result;
-use crate::util::cyclic_xor;
-use crate::util::salt_and_sha1;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
 use cornucopia::queries::reward::get_udid;
 use serde::Deserialize;
+
+use crate::Database;
+use crate::Result;
+use crate::util::cyclic_xor;
+use crate::util::salt_and_sha1;
 
 const CHEST_XOR_KEY: &[u8] = b"59182";
 

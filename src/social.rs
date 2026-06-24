@@ -3,6 +3,7 @@ use axum::routing::post;
 
 mod blockGJUser20;
 mod unblockGJUser20;
+mod uploadGJMessage20;
 
 pub fn routes() -> Router {
     Router::new()
@@ -10,5 +11,9 @@ pub fn routes() -> Router {
         .route(
             "/unblockGJUser20.php",
             post(unblockGJUser20::unblockGJUser20),
+        )
+        .route(
+            "/uploadGJMessage20.php",
+            post(uploadGJMessage20::uploadGJMessage20),
         )
 }

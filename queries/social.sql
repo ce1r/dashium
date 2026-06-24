@@ -20,3 +20,19 @@ WHERE blocks.user_id = users.id
     AND blocks.user_id = :user_id
     AND blocks.target_id = :target_id
     AND users.gjp2 = :gjp2;
+
+--! create_message
+INSERT INTO messages (
+    user_id,
+    target_id,
+    subject,
+    body
+)
+SELECT
+    :user_id,
+    :target_id,
+    :subject,
+    :body
+FROM users
+WHERE id = :user_id
+    AND gjp2 = :gjp2;

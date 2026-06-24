@@ -1,8 +1,9 @@
-use crate::Database;
-use crate::Result;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::save_data;
 use serde::Deserialize;
+
+use crate::Database;
+use crate::Result;
 
 #[derive(Deserialize)]
 pub struct Data {

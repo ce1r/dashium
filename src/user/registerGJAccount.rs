@@ -1,11 +1,12 @@
-use crate::Database;
-use crate::Result;
-use crate::util::is_ascii_alphanumeric;
-use crate::util::salt_and_sha1;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::create_user;
 use cornucopia::tokio_postgres::error::SqlState;
 use serde::Deserialize;
+
+use crate::Database;
+use crate::Result;
+use crate::util::is_ascii_alphanumeric;
+use crate::util::salt_and_sha1;
 
 #[derive(Deserialize)]
 pub struct Data {
