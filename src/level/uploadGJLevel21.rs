@@ -1,5 +1,3 @@
-use crate::Database;
-use crate::Result;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
@@ -7,6 +5,9 @@ use cornucopia::queries::level::create_level;
 use serde::Deserialize;
 use serde_with::BoolFromInt;
 use serde_with::serde_as;
+
+use crate::Database;
+use crate::Result;
 
 #[serde_as]
 #[derive(Deserialize)]

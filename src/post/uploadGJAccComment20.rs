@@ -1,10 +1,11 @@
-use crate::Database;
-use crate::Result;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
 use cornucopia::queries::post::create_post;
 use serde::Deserialize;
+
+use crate::Database;
+use crate::Result;
 
 #[derive(Deserialize)]
 pub struct Data {
