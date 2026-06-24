@@ -17,7 +17,7 @@ use futures::{self, StreamExt, TryStreamExt};
 pub struct BlockUserStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn block_user() -> BlockUserStmt {
     BlockUserStmt(
-        "INSERT INTO blocks ( user_id, target_id ) SELECT $1, $2 WHERE EXISTS ( SELECT 1 FROM users WHERE id = $1 AND gjp2 = $3 ) AND NOT EXISTS ( SELECT 1 FROM blocks WHERE user_id = $1 AND target_id = $2 )",
+        "INSERT INTO blocks ( user_id, target_id ) SELECT $1, $2 WHERE EXISTS ( SELECT 1 FROM users WHERE id = $1 AND gjp2 = $3 )",
         None,
     )
 }
