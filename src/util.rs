@@ -1,5 +1,7 @@
 use crate::Database;
 use crate::error::AppError;
+use chrono::Local;
+use chrono::Timelike;
 use cornucopia::queries::user::get_hash_and_salt;
 use sha1::Digest;
 use sha1::Sha1;
@@ -37,4 +39,8 @@ pub fn cyclic_xor(data: &mut [u8], key: &[u8]) {
     for (i, byte) in data.iter_mut().enumerate() {
         *byte ^= key[i % key.len()];
     }
+}
+
+pub fn seconds_until_midnight() -> u32 {
+    86400 - Local::now().time().num_seconds_from_midnight()
 }
