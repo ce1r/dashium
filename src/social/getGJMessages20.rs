@@ -5,6 +5,7 @@ use crate::util::verify_gjp2;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
+use chrono_humanize::HumanTime;
 use cornucopia::queries::social::get_messages;
 use cornucopia::queries::social::get_sent_messages;
 use serde::Deserialize;
@@ -50,6 +51,9 @@ pub async fn getGJMessages20(Form(form): Form<Data>) -> Result<String> {
             let user_id = if get_sent { m.target_id } else { m.user_id };
             let is_read = u8::from(m.is_read);
             let subject = URL_SAFE.encode(&m.subject);
+            let created_at = HumanTime::from(m.created_at)
+                .to_string()
+                .replace(" ago", "");
 
             gd_format!(
                 ":",
@@ -57,7 +61,7 @@ pub async fn getGJMessages20(Form(form): Form<Data>) -> Result<String> {
                 2 => user_id,
                 4 => subject,
                 6 => m.username,
-                7 => m.created_at,
+                7 => created_at,
                 8 => is_read,
                 9 => form.getSent,
             )

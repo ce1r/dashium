@@ -27,7 +27,6 @@ pub async fn getGJRewards(Form(form): Form<Data>) -> Result<String> {
 
     let mut chk = URL_SAFE.decode(&form.chk[5..])?;
     cyclic_xor(&mut chk, CHEST_XOR_KEY);
-
     let chk = String::from_utf8(chk)?;
 
     let mut list = format!(

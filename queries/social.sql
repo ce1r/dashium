@@ -53,3 +53,14 @@ JOIN users u ON m.target_id = u.id
 WHERE m.user_id = :user_id
 ORDER BY m.created_at DESC
 LIMIT 10 OFFSET :offset;
+
+--! download_message: Message
+WITH updated AS (
+    UPDATE messages
+    SET is_read = TRUE
+    WHERE id = :message_id AND target_id = :target_id
+    RETURNING *
+)
+SELECT updated.*, u.username
+FROM updated
+JOIN users u ON updated.user_id = u.id;

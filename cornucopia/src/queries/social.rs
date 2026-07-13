@@ -27,6 +27,11 @@ pub struct GetSentMessagesParams {
     pub user_id: i32,
     pub offset: i64,
 }
+#[derive(Clone, Copy, Debug)]
+pub struct DownloadMessageParams {
+    pub message_id: i32,
+    pub target_id: i32,
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct Message {
     pub id: i32,
@@ -407,5 +412,66 @@ impl<'c, 'a, 's, C: GenericClient>
         params: &'a GetSentMessagesParams,
     ) -> MessageQuery<'c, 'a, 's, C, Message, 2> {
         self.bind(client, &params.user_id, &params.offset)
+    }
+}
+pub struct DownloadMessageStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn download_message() -> DownloadMessageStmt {
+    DownloadMessageStmt(
+        "WITH updated AS ( UPDATE messages SET is_read = TRUE WHERE id = $1 AND target_id = $2 RETURNING * ) SELECT updated.*, u.username FROM updated JOIN users u ON updated.user_id = u.id",
+        None,
+    )
+}
+impl DownloadMessageStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        message_id: &'a i32,
+        target_id: &'a i32,
+    ) -> MessageQuery<'c, 'a, 's, C, Message, 2> {
+        MessageQuery {
+            client,
+            params: [message_id, target_id],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor:
+                |row: &tokio_postgres::Row| -> Result<MessageBorrowed, tokio_postgres::Error> {
+                    Ok(MessageBorrowed {
+                        id: row.try_get(0)?,
+                        user_id: row.try_get(1)?,
+                        target_id: row.try_get(2)?,
+                        subject: row.try_get(3)?,
+                        body: row.try_get(4)?,
+                        is_read: row.try_get(5)?,
+                        created_at: row.try_get(6)?,
+                        username: row.try_get(7)?,
+                    })
+                },
+            mapper: |it| Message::from(it),
+        }
+    }
+}
+impl<'c, 'a, 's, C: GenericClient>
+    crate::client::async_::Params<
+        'c,
+        'a,
+        's,
+        DownloadMessageParams,
+        MessageQuery<'c, 'a, 's, C, Message, 2>,
+        C,
+    > for DownloadMessageStmt
+{
+    fn params(
+        &'s self,
+        client: &'c C,
+        params: &'a DownloadMessageParams,
+    ) -> MessageQuery<'c, 'a, 's, C, Message, 2> {
+        self.bind(client, &params.message_id, &params.target_id)
     }
 }

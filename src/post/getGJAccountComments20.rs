@@ -4,6 +4,7 @@ use crate::gd_format;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
+use chrono_humanize::HumanTime;
 use cornucopia::queries::post::get_posts;
 use serde::Deserialize;
 
@@ -32,13 +33,16 @@ pub async fn getGJAccountComments20(Form(form): Form<Data>) -> Result<String> {
         .iter()
         .map(|p| {
             let body = URL_SAFE.encode(&p.body);
+            let created_at = HumanTime::from(p.created_at)
+                .to_string()
+                .replace(" ago", "");
 
             gd_format!(
                 "~",
                 2 => body,
                 4 => p.likes,
                 6 => p.id,
-                9 => p.created_at,
+                9 => created_at,
             )
         })
         .collect::<Vec<_>>()
