@@ -8,7 +8,6 @@ SELECT
     :body
 FROM users
 WHERE id = :user_id
-    AND gjp2 = :gjp2
 RETURNING id;
 
 --! get_posts
@@ -20,7 +19,5 @@ LIMIT 10 OFFSET :offset;
 
 --! delete_post
 DELETE FROM posts
-USING users
 WHERE posts.id = :post_id
-    AND posts.user_id = users.id
-    AND users.gjp2 = :gjp2;
+    AND posts.user_id = :user_id;

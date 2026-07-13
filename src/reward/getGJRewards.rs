@@ -1,13 +1,13 @@
-use axum_extra::extract::Form;
-use base64::Engine;
-use base64::engine::general_purpose::URL_SAFE;
-use cornucopia::queries::reward::get_udid;
-use serde::Deserialize;
-
 use crate::Database;
 use crate::Result;
 use crate::util::cyclic_xor;
 use crate::util::salt_and_sha1;
+use crate::util::verify_gjp2;
+use axum_extra::extract::Form;
+use base64::Engine;
+use base64::engine::general_purpose::URL_SAFE;
+use cornucopia::queries::user::get_udid;
+use serde::Deserialize;
 
 const CHEST_XOR_KEY: &[u8] = b"59182";
 
@@ -21,11 +21,9 @@ pub struct Data {
 
 pub async fn getGJRewards(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
+    verify_gjp2(form.accountID, &form.gjp2).await?;
 
-    let udid = get_udid()
-        .bind(&client, &form.accountID, &form.gjp2)
-        .one()
-        .await?;
+    let udid = get_udid().bind(&client, &form.accountID).one().await?;
 
     let mut chk = URL_SAFE.decode(&form.chk[5..])?;
     cyclic_xor(&mut chk, CHEST_XOR_KEY);

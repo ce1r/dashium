@@ -1,20 +1,19 @@
 // This file was generated with `cornucopia`. Do not modify.
 
 #[derive(Debug)]
-pub struct CreatePostParams<T1: crate::StringSql, T2: crate::StringSql> {
+pub struct CreatePostParams<T1: crate::StringSql> {
     pub user_id: i32,
     pub body: T1,
-    pub gjp2: T2,
 }
 #[derive(Clone, Copy, Debug)]
 pub struct GetPostsParams {
     pub user_id: i32,
     pub offset: i64,
 }
-#[derive(Debug)]
-pub struct DeletePostParams<T1: crate::StringSql> {
+#[derive(Clone, Copy, Debug)]
+pub struct DeletePostParams {
     pub post_id: i32,
-    pub gjp2: T1,
+    pub user_id: i32,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct GetPosts {
@@ -183,7 +182,7 @@ where
 pub struct CreatePostStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn create_post() -> CreatePostStmt {
     CreatePostStmt(
-        "INSERT INTO posts ( user_id, body ) SELECT $1, $2 FROM users WHERE id = $1 AND gjp2 = $3 RETURNING id",
+        "INSERT INTO posts ( user_id, body ) SELECT $1, $2 FROM users WHERE id = $1 RETURNING id",
         None,
     )
 }
@@ -195,16 +194,15 @@ impl CreatePostStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>(
+    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
         &'s self,
         client: &'c C,
         user_id: &'a i32,
         body: &'a T1,
-        gjp2: &'a T2,
-    ) -> I32Query<'c, 'a, 's, C, i32, 3> {
+    ) -> I32Query<'c, 'a, 's, C, i32, 2> {
         I32Query {
             client,
-            params: [user_id, body, gjp2],
+            params: [user_id, body],
             query: self.0,
             cached: self.1.as_ref(),
             extractor: |row| Ok(row.try_get(0)?),
@@ -212,22 +210,22 @@ impl CreatePostStmt {
         }
     }
 }
-impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>
+impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
     crate::client::async_::Params<
         'c,
         'a,
         's,
-        CreatePostParams<T1, T2>,
-        I32Query<'c, 'a, 's, C, i32, 3>,
+        CreatePostParams<T1>,
+        I32Query<'c, 'a, 's, C, i32, 2>,
         C,
     > for CreatePostStmt
 {
     fn params(
         &'s self,
         client: &'c C,
-        params: &'a CreatePostParams<T1, T2>,
-    ) -> I32Query<'c, 'a, 's, C, i32, 3> {
-        self.bind(client, &params.user_id, &params.body, &params.gjp2)
+        params: &'a CreatePostParams<T1>,
+    ) -> I32Query<'c, 'a, 's, C, i32, 2> {
+        self.bind(client, &params.user_id, &params.body)
     }
 }
 pub struct GetPostsStmt(&'static str, Option<tokio_postgres::Statement>);
@@ -291,7 +289,7 @@ impl<'c, 'a, 's, C: GenericClient>
 pub struct DeletePostStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn delete_post() -> DeletePostStmt {
     DeletePostStmt(
-        "DELETE FROM posts USING users WHERE posts.id = $1 AND posts.user_id = users.id AND users.gjp2 = $2",
+        "DELETE FROM posts WHERE posts.id = $1 AND posts.user_id = $2",
         None,
     )
 }
@@ -303,21 +301,21 @@ impl DeletePostStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub async fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+    pub async fn bind<'c, 'a, 's, C: GenericClient>(
         &'s self,
         client: &'c C,
         post_id: &'a i32,
-        gjp2: &'a T1,
+        user_id: &'a i32,
     ) -> Result<u64, tokio_postgres::Error> {
-        client.execute(self.0, &[post_id, gjp2]).await
+        client.execute(self.0, &[post_id, user_id]).await
     }
 }
-impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql>
+impl<'a, C: GenericClient + Send + Sync>
     crate::client::async_::Params<
         'a,
         'a,
         'a,
-        DeletePostParams<T1>,
+        DeletePostParams,
         std::pin::Pin<
             Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
         >,
@@ -327,10 +325,10 @@ impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql>
     fn params(
         &'a self,
         client: &'a C,
-        params: &'a DeletePostParams<T1>,
+        params: &'a DeletePostParams,
     ) -> std::pin::Pin<
         Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
     > {
-        Box::pin(self.bind(client, &params.post_id, &params.gjp2))
+        Box::pin(self.bind(client, &params.post_id, &params.user_id))
     }
 }

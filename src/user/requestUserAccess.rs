@@ -1,9 +1,9 @@
+use crate::Database;
+use crate::Result;
+use crate::util::verify_gjp2;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::get_mod_level;
 use serde::Deserialize;
-
-use crate::Database;
-use crate::Result;
 
 #[derive(Deserialize)]
 pub struct Data {
@@ -13,11 +13,9 @@ pub struct Data {
 
 pub async fn requestUserAccess(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
+    verify_gjp2(form.accountID, &form.gjp2).await?;
 
-    let mod_level = get_mod_level()
-        .bind(&client, &form.accountID, &form.gjp2)
-        .one()
-        .await?;
+    let mod_level = get_mod_level().bind(&client, &form.accountID).one().await?;
 
     match mod_level {
         1 | 2 | 99 => Ok(mod_level.to_string()),

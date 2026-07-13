@@ -2,6 +2,5 @@
 
 pub mod level;
 pub mod post;
-pub mod reward;
 pub mod social;
 pub mod user;

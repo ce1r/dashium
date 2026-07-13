@@ -1,30 +1,29 @@
 // This file was generated with `cornucopia`. Do not modify.
 
 #[derive(Debug)]
-pub struct CreateUserParams<T1: crate::StringSql, T2: crate::StringSql, T3: crate::StringSql> {
+pub struct CreateUserParams<
+    T1: crate::StringSql,
+    T2: crate::StringSql,
+    T3: crate::BytesSql,
+    T4: crate::BytesSql,
+> {
     pub username: T1,
     pub email: T2,
-    pub gjp2: T3,
+    pub hash: T3,
+    pub salt: T4,
 }
 #[derive(Debug)]
-pub struct LoginUserParams<T1: crate::StringSql, T2: crate::StringSql, T3: crate::StringSql> {
+pub struct LoginUserParams<T1: crate::StringSql, T2: crate::StringSql> {
     pub udid: T1,
     pub username: T2,
-    pub gjp2: T3,
 }
 #[derive(Debug)]
-pub struct SaveDataParams<T1: crate::StringSql, T2: crate::StringSql> {
+pub struct SaveDataParams<T1: crate::StringSql> {
     pub save_data: T1,
     pub user_id: i32,
-    pub gjp2: T2,
 }
-#[derive(Debug)]
-pub struct LoadDataParams<T1: crate::StringSql> {
-    pub user_id: i32,
-    pub gjp2: T1,
-}
-#[derive(Debug)]
-pub struct SaveStatsParams<T1: crate::StringSql> {
+#[derive(Clone, Copy, Debug)]
+pub struct SaveStatsParams {
     pub stars: i32,
     pub demons: i32,
     pub diamonds: i32,
@@ -48,12 +47,6 @@ pub struct SaveStatsParams<T1: crate::StringSql> {
     pub color2: i16,
     pub color3: i16,
     pub user_id: i32,
-    pub gjp2: T1,
-}
-#[derive(Debug)]
-pub struct GetModLevelParams<T1: crate::StringSql> {
-    pub user_id: i32,
-    pub gjp2: T1,
 }
 #[derive(Debug)]
 pub struct UpdateSettingsParams<
@@ -63,7 +56,6 @@ pub struct UpdateSettingsParams<
     T4: crate::StringSql,
     T5: crate::StringSql,
     T6: crate::StringSql,
-    T7: crate::StringSql,
 > {
     pub message_setting: i16,
     pub friend_setting: i16,
@@ -75,13 +67,29 @@ pub struct UpdateSettingsParams<
     pub instagram: T5,
     pub tiktok: T6,
     pub user_id: i32,
-    pub gjp2: T7,
 }
 #[derive(Debug)]
 pub struct SearchUsersParams<T1: crate::StringSql> {
     pub search: T1,
     pub user_id: i32,
     pub offset: i64,
+}
+#[derive(Debug, Clone, PartialEq)]
+pub struct GetHashAndSalt {
+    pub hash: Vec<u8>,
+    pub salt: Vec<u8>,
+}
+pub struct GetHashAndSaltBorrowed<'a> {
+    pub hash: &'a [u8],
+    pub salt: &'a [u8],
+}
+impl<'a> From<GetHashAndSaltBorrowed<'a>> for GetHashAndSalt {
+    fn from(GetHashAndSaltBorrowed { hash, salt }: GetHashAndSaltBorrowed<'a>) -> Self {
+        Self {
+            hash: hash.into(),
+            salt: salt.into(),
+        }
+    }
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct GetUser {
@@ -242,6 +250,26 @@ impl<'a> From<GetUserBorrowed<'a>> for GetUser {
     }
 }
 #[derive(Debug, Clone, PartialEq)]
+pub struct LoginUser {
+    pub id: i32,
+    pub hash: Vec<u8>,
+    pub salt: Vec<u8>,
+}
+pub struct LoginUserBorrowed<'a> {
+    pub id: i32,
+    pub hash: &'a [u8],
+    pub salt: &'a [u8],
+}
+impl<'a> From<LoginUserBorrowed<'a>> for LoginUser {
+    fn from(LoginUserBorrowed { id, hash, salt }: LoginUserBorrowed<'a>) -> Self {
+        Self {
+            id,
+            hash: hash.into(),
+            salt: salt.into(),
+        }
+    }
+}
+#[derive(Debug, Clone, PartialEq)]
 pub struct SearchUsers {
     pub id: i32,
     pub username: String,
@@ -317,6 +345,73 @@ impl<'a> From<SearchUsersBorrowed<'a>> for SearchUsers {
 }
 use crate::client::async_::GenericClient;
 use futures::{self, StreamExt, TryStreamExt};
+pub struct GetHashAndSaltQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+    client: &'c C,
+    params: [&'a (dyn postgres_types::ToSql + Sync); N],
+    query: &'static str,
+    cached: Option<&'s tokio_postgres::Statement>,
+    extractor: fn(&tokio_postgres::Row) -> Result<GetHashAndSaltBorrowed, tokio_postgres::Error>,
+    mapper: fn(GetHashAndSaltBorrowed) -> T,
+}
+impl<'c, 'a, 's, C, T: 'c, const N: usize> GetHashAndSaltQuery<'c, 'a, 's, C, T, N>
+where
+    C: GenericClient,
+{
+    pub fn map<R>(
+        self,
+        mapper: fn(GetHashAndSaltBorrowed) -> R,
+    ) -> GetHashAndSaltQuery<'c, 'a, 's, C, R, N> {
+        GetHashAndSaltQuery {
+            client: self.client,
+            params: self.params,
+            query: self.query,
+            cached: self.cached,
+            extractor: self.extractor,
+            mapper,
+        }
+    }
+    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
+        let row =
+            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
+        Ok((self.mapper)((self.extractor)(&row)?))
+    }
+    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
+        self.iter().await?.try_collect().await
+    }
+    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
+        let opt_row =
+            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
+        Ok(opt_row
+            .map(|row| {
+                let extracted = (self.extractor)(&row)?;
+                Ok((self.mapper)(extracted))
+            })
+            .transpose()?)
+    }
+    pub async fn iter(
+        self,
+    ) -> Result<
+        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
+        tokio_postgres::Error,
+    > {
+        let stream = crate::client::async_::raw(
+            self.client,
+            self.query,
+            crate::slice_iter(&self.params),
+            self.cached,
+        )
+        .await?;
+        let mapped = stream
+            .map(move |res| {
+                res.and_then(|row| {
+                    let extracted = (self.extractor)(&row)?;
+                    Ok((self.mapper)(extracted))
+                })
+            })
+            .into_stream();
+        Ok(mapped)
+    }
+}
 pub struct GetUserQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
     client: &'c C,
     params: [&'a (dyn postgres_types::ToSql + Sync); N],
@@ -381,20 +476,20 @@ where
         Ok(mapped)
     }
 }
-pub struct I32Query<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+pub struct LoginUserQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
     client: &'c C,
     params: [&'a (dyn postgres_types::ToSql + Sync); N],
     query: &'static str,
     cached: Option<&'s tokio_postgres::Statement>,
-    extractor: fn(&tokio_postgres::Row) -> Result<i32, tokio_postgres::Error>,
-    mapper: fn(i32) -> T,
+    extractor: fn(&tokio_postgres::Row) -> Result<LoginUserBorrowed, tokio_postgres::Error>,
+    mapper: fn(LoginUserBorrowed) -> T,
 }
-impl<'c, 'a, 's, C, T: 'c, const N: usize> I32Query<'c, 'a, 's, C, T, N>
+impl<'c, 'a, 's, C, T: 'c, const N: usize> LoginUserQuery<'c, 'a, 's, C, T, N>
 where
     C: GenericClient,
 {
-    pub fn map<R>(self, mapper: fn(i32) -> R) -> I32Query<'c, 'a, 's, C, R, N> {
-        I32Query {
+    pub fn map<R>(self, mapper: fn(LoginUserBorrowed) -> R) -> LoginUserQuery<'c, 'a, 's, C, R, N> {
+        LoginUserQuery {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -459,6 +554,70 @@ where
 {
     pub fn map<R>(self, mapper: fn(&str) -> R) -> StringQuery<'c, 'a, 's, C, R, N> {
         StringQuery {
+            client: self.client,
+            params: self.params,
+            query: self.query,
+            cached: self.cached,
+            extractor: self.extractor,
+            mapper,
+        }
+    }
+    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
+        let row =
+            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
+        Ok((self.mapper)((self.extractor)(&row)?))
+    }
+    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
+        self.iter().await?.try_collect().await
+    }
+    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
+        let opt_row =
+            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
+        Ok(opt_row
+            .map(|row| {
+                let extracted = (self.extractor)(&row)?;
+                Ok((self.mapper)(extracted))
+            })
+            .transpose()?)
+    }
+    pub async fn iter(
+        self,
+    ) -> Result<
+        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
+        tokio_postgres::Error,
+    > {
+        let stream = crate::client::async_::raw(
+            self.client,
+            self.query,
+            crate::slice_iter(&self.params),
+            self.cached,
+        )
+        .await?;
+        let mapped = stream
+            .map(move |res| {
+                res.and_then(|row| {
+                    let extracted = (self.extractor)(&row)?;
+                    Ok((self.mapper)(extracted))
+                })
+            })
+            .into_stream();
+        Ok(mapped)
+    }
+}
+pub struct I32Query<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+    client: &'c C,
+    params: [&'a (dyn postgres_types::ToSql + Sync); N],
+    query: &'static str,
+    cached: Option<&'s tokio_postgres::Statement>,
+    extractor: fn(&tokio_postgres::Row) -> Result<i32, tokio_postgres::Error>,
+    mapper: fn(i32) -> T,
+}
+impl<'c, 'a, 's, C, T: 'c, const N: usize> I32Query<'c, 'a, 's, C, T, N>
+where
+    C: GenericClient,
+{
+    pub fn map<R>(self, mapper: fn(i32) -> R) -> I32Query<'c, 'a, 's, C, R, N> {
+        I32Query {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -640,10 +799,44 @@ where
         Ok(mapped)
     }
 }
+pub struct GetHashAndSaltStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_hash_and_salt() -> GetHashAndSaltStmt {
+    GetHashAndSaltStmt("SELECT hash, salt FROM users WHERE id = $1", None)
+}
+impl GetHashAndSaltStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        user_id: &'a i32,
+    ) -> GetHashAndSaltQuery<'c, 'a, 's, C, GetHashAndSalt, 1> {
+        GetHashAndSaltQuery {
+            client,
+            params: [user_id],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |
+                row: &tokio_postgres::Row,
+            | -> Result<GetHashAndSaltBorrowed, tokio_postgres::Error> {
+                Ok(GetHashAndSaltBorrowed {
+                    hash: row.try_get(0)?,
+                    salt: row.try_get(1)?,
+                })
+            },
+            mapper: |it| GetHashAndSalt::from(it),
+        }
+    }
+}
 pub struct CreateUserStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn create_user() -> CreateUserStmt {
     CreateUserStmt(
-        "INSERT INTO users ( username, email, gjp2 ) VALUES ( $1, $2, $3 )",
+        "INSERT INTO users ( username, email, hash, salt ) VALUES ( $1, $2, $3, $4 )",
         None,
     )
 }
@@ -662,15 +855,17 @@ impl CreateUserStmt {
         C: GenericClient,
         T1: crate::StringSql,
         T2: crate::StringSql,
-        T3: crate::StringSql,
+        T3: crate::BytesSql,
+        T4: crate::BytesSql,
     >(
         &'s self,
         client: &'c C,
         username: &'a T1,
         email: &'a T2,
-        gjp2: &'a T3,
+        hash: &'a T3,
+        salt: &'a T4,
     ) -> Result<u64, tokio_postgres::Error> {
-        client.execute(self.0, &[username, email, gjp2]).await
+        client.execute(self.0, &[username, email, hash, salt]).await
     }
 }
 impl<
@@ -678,13 +873,14 @@ impl<
     C: GenericClient + Send + Sync,
     T1: crate::StringSql,
     T2: crate::StringSql,
-    T3: crate::StringSql,
+    T3: crate::BytesSql,
+    T4: crate::BytesSql,
 >
     crate::client::async_::Params<
         'a,
         'a,
         'a,
-        CreateUserParams<T1, T2, T3>,
+        CreateUserParams<T1, T2, T3, T4>,
         std::pin::Pin<
             Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
         >,
@@ -694,11 +890,17 @@ impl<
     fn params(
         &'a self,
         client: &'a C,
-        params: &'a CreateUserParams<T1, T2, T3>,
+        params: &'a CreateUserParams<T1, T2, T3, T4>,
     ) -> std::pin::Pin<
         Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
     > {
-        Box::pin(self.bind(client, &params.username, &params.email, &params.gjp2))
+        Box::pin(self.bind(
+            client,
+            &params.username,
+            &params.email,
+            &params.hash,
+            &params.salt,
+        ))
     }
 }
 pub struct GetUserStmt(&'static str, Option<tokio_postgres::Statement>);
@@ -774,7 +976,7 @@ impl GetUserStmt {
 pub struct LoginUserStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn login_user() -> LoginUserStmt {
     LoginUserStmt(
-        "UPDATE users SET udid = $1 WHERE username = $2 AND gjp2 = $3 RETURNING id",
+        "UPDATE users SET udid = $1 WHERE username = $2 RETURNING id, hash, salt",
         None,
     )
 }
@@ -786,55 +988,50 @@ impl LoginUserStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub fn bind<
-        'c,
-        'a,
-        's,
-        C: GenericClient,
-        T1: crate::StringSql,
-        T2: crate::StringSql,
-        T3: crate::StringSql,
-    >(
+    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>(
         &'s self,
         client: &'c C,
         udid: &'a T1,
         username: &'a T2,
-        gjp2: &'a T3,
-    ) -> I32Query<'c, 'a, 's, C, i32, 3> {
-        I32Query {
+    ) -> LoginUserQuery<'c, 'a, 's, C, LoginUser, 2> {
+        LoginUserQuery {
             client,
-            params: [udid, username, gjp2],
+            params: [udid, username],
             query: self.0,
             cached: self.1.as_ref(),
-            extractor: |row| Ok(row.try_get(0)?),
-            mapper: |it| it,
+            extractor:
+                |row: &tokio_postgres::Row| -> Result<LoginUserBorrowed, tokio_postgres::Error> {
+                    Ok(LoginUserBorrowed {
+                        id: row.try_get(0)?,
+                        hash: row.try_get(1)?,
+                        salt: row.try_get(2)?,
+                    })
+                },
+            mapper: |it| LoginUser::from(it),
         }
     }
 }
-impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql, T3: crate::StringSql>
+impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>
     crate::client::async_::Params<
         'c,
         'a,
         's,
-        LoginUserParams<T1, T2, T3>,
-        I32Query<'c, 'a, 's, C, i32, 3>,
+        LoginUserParams<T1, T2>,
+        LoginUserQuery<'c, 'a, 's, C, LoginUser, 2>,
         C,
     > for LoginUserStmt
 {
     fn params(
         &'s self,
         client: &'c C,
-        params: &'a LoginUserParams<T1, T2, T3>,
-    ) -> I32Query<'c, 'a, 's, C, i32, 3> {
-        self.bind(client, &params.udid, &params.username, &params.gjp2)
+        params: &'a LoginUserParams<T1, T2>,
+    ) -> LoginUserQuery<'c, 'a, 's, C, LoginUser, 2> {
+        self.bind(client, &params.udid, &params.username)
     }
 }
 pub struct SaveDataStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn save_data() -> SaveDataStmt {
-    SaveDataStmt(
-        "UPDATE users SET save_data = $1 WHERE id = $2 AND gjp2 = $3",
-        None,
-    )
+    SaveDataStmt("UPDATE users SET save_data = $1 WHERE id = $2", None)
 }
 impl SaveDataStmt {
     pub async fn prepare<'a, C: GenericClient>(
@@ -844,22 +1041,21 @@ impl SaveDataStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub async fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>(
+    pub async fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
         &'s self,
         client: &'c C,
         save_data: &'a T1,
         user_id: &'a i32,
-        gjp2: &'a T2,
     ) -> Result<u64, tokio_postgres::Error> {
-        client.execute(self.0, &[save_data, user_id, gjp2]).await
+        client.execute(self.0, &[save_data, user_id]).await
     }
 }
-impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql, T2: crate::StringSql>
+impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql>
     crate::client::async_::Params<
         'a,
         'a,
         'a,
-        SaveDataParams<T1, T2>,
+        SaveDataParams<T1>,
         std::pin::Pin<
             Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
         >,
@@ -869,19 +1065,16 @@ impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql, T2: crate::String
     fn params(
         &'a self,
         client: &'a C,
-        params: &'a SaveDataParams<T1, T2>,
+        params: &'a SaveDataParams<T1>,
     ) -> std::pin::Pin<
         Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
     > {
-        Box::pin(self.bind(client, &params.save_data, &params.user_id, &params.gjp2))
+        Box::pin(self.bind(client, &params.save_data, &params.user_id))
     }
 }
 pub struct LoadDataStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn load_data() -> LoadDataStmt {
-    LoadDataStmt(
-        "SELECT save_data FROM users WHERE id = $1 AND gjp2 = $2",
-        None,
-    )
+    LoadDataStmt("SELECT save_data FROM users WHERE id = $1", None)
 }
 impl LoadDataStmt {
     pub async fn prepare<'a, C: GenericClient>(
@@ -891,15 +1084,14 @@ impl LoadDataStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
         &'s self,
         client: &'c C,
         user_id: &'a i32,
-        gjp2: &'a T1,
-    ) -> StringQuery<'c, 'a, 's, C, String, 2> {
+    ) -> StringQuery<'c, 'a, 's, C, String, 1> {
         StringQuery {
             client,
-            params: [user_id, gjp2],
+            params: [user_id],
             query: self.0,
             cached: self.1.as_ref(),
             extractor: |row| Ok(row.try_get(0)?),
@@ -907,28 +1099,10 @@ impl LoadDataStmt {
         }
     }
 }
-impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
-    crate::client::async_::Params<
-        'c,
-        'a,
-        's,
-        LoadDataParams<T1>,
-        StringQuery<'c, 'a, 's, C, String, 2>,
-        C,
-    > for LoadDataStmt
-{
-    fn params(
-        &'s self,
-        client: &'c C,
-        params: &'a LoadDataParams<T1>,
-    ) -> StringQuery<'c, 'a, 's, C, String, 2> {
-        self.bind(client, &params.user_id, &params.gjp2)
-    }
-}
 pub struct SaveStatsStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn save_stats() -> SaveStatsStmt {
     SaveStatsStmt(
-        "UPDATE users SET stars = $1, demons = $2, diamonds = $3, moons = $4, secret_coins = $5, user_coins = $6, cube = $7, ship = $8, ball = $9, ufo = $10, wave = $11, robot = $12, spider = $13, swing = $14, jetpack = $15, glow = $16, explosion = $17, icon = $18, icon_type = $19, color1 = $20, color2 = $21, color3 = $22 WHERE id = $23 AND gjp2 = $24 RETURNING id",
+        "UPDATE users SET stars = $1, demons = $2, diamonds = $3, moons = $4, secret_coins = $5, user_coins = $6, cube = $7, ship = $8, ball = $9, ufo = $10, wave = $11, robot = $12, spider = $13, swing = $14, jetpack = $15, glow = $16, explosion = $17, icon = $18, icon_type = $19, color1 = $20, color2 = $21, color3 = $22 WHERE id = $23 RETURNING id",
         None,
     )
 }
@@ -940,7 +1114,7 @@ impl SaveStatsStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
         &'s self,
         client: &'c C,
         stars: &'a i32,
@@ -966,8 +1140,7 @@ impl SaveStatsStmt {
         color2: &'a i16,
         color3: &'a i16,
         user_id: &'a i32,
-        gjp2: &'a T1,
-    ) -> I32Query<'c, 'a, 's, C, i32, 24> {
+    ) -> I32Query<'c, 'a, 's, C, i32, 23> {
         I32Query {
             client,
             params: [
@@ -994,7 +1167,6 @@ impl SaveStatsStmt {
                 color2,
                 color3,
                 user_id,
-                gjp2,
             ],
             query: self.0,
             cached: self.1.as_ref(),
@@ -1003,21 +1175,15 @@ impl SaveStatsStmt {
         }
     }
 }
-impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
-    crate::client::async_::Params<
-        'c,
-        'a,
-        's,
-        SaveStatsParams<T1>,
-        I32Query<'c, 'a, 's, C, i32, 24>,
-        C,
-    > for SaveStatsStmt
+impl<'c, 'a, 's, C: GenericClient>
+    crate::client::async_::Params<'c, 'a, 's, SaveStatsParams, I32Query<'c, 'a, 's, C, i32, 23>, C>
+    for SaveStatsStmt
 {
     fn params(
         &'s self,
         client: &'c C,
-        params: &'a SaveStatsParams<T1>,
-    ) -> I32Query<'c, 'a, 's, C, i32, 24> {
+        params: &'a SaveStatsParams,
+    ) -> I32Query<'c, 'a, 's, C, i32, 23> {
         self.bind(
             client,
             &params.stars,
@@ -1043,16 +1209,12 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
             &params.color2,
             &params.color3,
             &params.user_id,
-            &params.gjp2,
         )
     }
 }
 pub struct GetModLevelStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn get_mod_level() -> GetModLevelStmt {
-    GetModLevelStmt(
-        "SELECT mod_level FROM users WHERE id = $1 AND gjp2 = $2",
-        None,
-    )
+    GetModLevelStmt("SELECT mod_level FROM users WHERE id = $1", None)
 }
 impl GetModLevelStmt {
     pub async fn prepare<'a, C: GenericClient>(
@@ -1062,15 +1224,14 @@ impl GetModLevelStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
         &'s self,
         client: &'c C,
         user_id: &'a i32,
-        gjp2: &'a T1,
-    ) -> I16Query<'c, 'a, 's, C, i16, 2> {
+    ) -> I16Query<'c, 'a, 's, C, i16, 1> {
         I16Query {
             client,
-            params: [user_id, gjp2],
+            params: [user_id],
             query: self.0,
             cached: self.1.as_ref(),
             extractor: |row| Ok(row.try_get(0)?),
@@ -1078,28 +1239,10 @@ impl GetModLevelStmt {
         }
     }
 }
-impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
-    crate::client::async_::Params<
-        'c,
-        'a,
-        's,
-        GetModLevelParams<T1>,
-        I16Query<'c, 'a, 's, C, i16, 2>,
-        C,
-    > for GetModLevelStmt
-{
-    fn params(
-        &'s self,
-        client: &'c C,
-        params: &'a GetModLevelParams<T1>,
-    ) -> I16Query<'c, 'a, 's, C, i16, 2> {
-        self.bind(client, &params.user_id, &params.gjp2)
-    }
-}
 pub struct UpdateSettingsStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn update_settings() -> UpdateSettingsStmt {
     UpdateSettingsStmt(
-        "UPDATE users SET message_setting = $1, friend_setting = $2, comment_setting = $3, youtube = $4, twitter = $5, twitch = $6, discord = $7, instagram = $8, tiktok = $9 WHERE id = $10 AND gjp2 = $11",
+        "UPDATE users SET message_setting = $1, friend_setting = $2, comment_setting = $3, youtube = $4, twitter = $5, twitch = $6, discord = $7, instagram = $8, tiktok = $9 WHERE id = $10",
         None,
     )
 }
@@ -1122,7 +1265,6 @@ impl UpdateSettingsStmt {
         T4: crate::StringSql,
         T5: crate::StringSql,
         T6: crate::StringSql,
-        T7: crate::StringSql,
     >(
         &'s self,
         client: &'c C,
@@ -1136,7 +1278,6 @@ impl UpdateSettingsStmt {
         instagram: &'a T5,
         tiktok: &'a T6,
         user_id: &'a i32,
-        gjp2: &'a T7,
     ) -> Result<u64, tokio_postgres::Error> {
         client
             .execute(
@@ -1152,7 +1293,6 @@ impl UpdateSettingsStmt {
                     instagram,
                     tiktok,
                     user_id,
-                    gjp2,
                 ],
             )
             .await
@@ -1167,13 +1307,12 @@ impl<
     T4: crate::StringSql,
     T5: crate::StringSql,
     T6: crate::StringSql,
-    T7: crate::StringSql,
 >
     crate::client::async_::Params<
         'a,
         'a,
         'a,
-        UpdateSettingsParams<T1, T2, T3, T4, T5, T6, T7>,
+        UpdateSettingsParams<T1, T2, T3, T4, T5, T6>,
         std::pin::Pin<
             Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
         >,
@@ -1183,7 +1322,7 @@ impl<
     fn params(
         &'a self,
         client: &'a C,
-        params: &'a UpdateSettingsParams<T1, T2, T3, T4, T5, T6, T7>,
+        params: &'a UpdateSettingsParams<T1, T2, T3, T4, T5, T6>,
     ) -> std::pin::Pin<
         Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
     > {
@@ -1199,7 +1338,6 @@ impl<
             &params.instagram,
             &params.tiktok,
             &params.user_id,
-            &params.gjp2,
         ))
     }
 }
@@ -1270,5 +1408,32 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
         params: &'a SearchUsersParams<T1>,
     ) -> SearchUsersQuery<'c, 'a, 's, C, SearchUsers, 3> {
         self.bind(client, &params.search, &params.user_id, &params.offset)
+    }
+}
+pub struct GetUdidStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_udid() -> GetUdidStmt {
+    GetUdidStmt("SELECT udid FROM users WHERE id = $1", None)
+}
+impl GetUdidStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        user_id: &'a i32,
+    ) -> StringQuery<'c, 'a, 's, C, String, 1> {
+        StringQuery {
+            client,
+            params: [user_id],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |row| Ok(row.try_get(0)?),
+            mapper: |it| it.into(),
+        }
     }
 }

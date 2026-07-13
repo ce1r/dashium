@@ -1,12 +1,7 @@
 // This file was generated with `cornucopia`. Do not modify.
 
 #[derive(Debug)]
-pub struct CreateLevelParams<
-    T1: crate::StringSql,
-    T2: crate::StringSql,
-    T3: crate::StringSql,
-    T4: crate::StringSql,
-> {
+pub struct CreateLevelParams<T1: crate::StringSql, T2: crate::StringSql, T3: crate::StringSql> {
     pub name: T1,
     pub description: T2,
     pub level_data: T3,
@@ -23,7 +18,6 @@ pub struct CreateLevelParams<
     pub song_id: i32,
     pub visibility: i16,
     pub user_id: i32,
-    pub gjp2: T4,
 }
 use crate::client::async_::GenericClient;
 use futures::{self, StreamExt, TryStreamExt};
@@ -94,7 +88,7 @@ where
 pub struct CreateLevelStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn create_level() -> CreateLevelStmt {
     CreateLevelStmt(
-        "INSERT INTO levels ( name, description, user_id, level_data, version, original_level_id, length, objects, requested_stars, coins, is_auto, is_ldm, is_two_player, official_song_id, song_id, visibility ) SELECT $1, $2, users.id, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15 FROM users WHERE id = $16 AND gjp2 = $17 RETURNING id",
+        "INSERT INTO levels ( name, description, user_id, level_data, version, original_level_id, length, objects, requested_stars, coins, is_auto, is_ldm, is_two_player, official_song_id, song_id, visibility ) SELECT $1, $2, users.id, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15 FROM users WHERE id = $16 RETURNING id",
         None,
     )
 }
@@ -114,7 +108,6 @@ impl CreateLevelStmt {
         T1: crate::StringSql,
         T2: crate::StringSql,
         T3: crate::StringSql,
-        T4: crate::StringSql,
     >(
         &'s self,
         client: &'c C,
@@ -134,8 +127,7 @@ impl CreateLevelStmt {
         song_id: &'a i32,
         visibility: &'a i16,
         user_id: &'a i32,
-        gjp2: &'a T4,
-    ) -> I32Query<'c, 'a, 's, C, i32, 17> {
+    ) -> I32Query<'c, 'a, 's, C, i32, 16> {
         I32Query {
             client,
             params: [
@@ -155,7 +147,6 @@ impl CreateLevelStmt {
                 song_id,
                 visibility,
                 user_id,
-                gjp2,
             ],
             query: self.0,
             cached: self.1.as_ref(),
@@ -164,30 +155,21 @@ impl CreateLevelStmt {
         }
     }
 }
-impl<
-    'c,
-    'a,
-    's,
-    C: GenericClient,
-    T1: crate::StringSql,
-    T2: crate::StringSql,
-    T3: crate::StringSql,
-    T4: crate::StringSql,
->
+impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql, T3: crate::StringSql>
     crate::client::async_::Params<
         'c,
         'a,
         's,
-        CreateLevelParams<T1, T2, T3, T4>,
-        I32Query<'c, 'a, 's, C, i32, 17>,
+        CreateLevelParams<T1, T2, T3>,
+        I32Query<'c, 'a, 's, C, i32, 16>,
         C,
     > for CreateLevelStmt
 {
     fn params(
         &'s self,
         client: &'c C,
-        params: &'a CreateLevelParams<T1, T2, T3, T4>,
-    ) -> I32Query<'c, 'a, 's, C, i32, 17> {
+        params: &'a CreateLevelParams<T1, T2, T3>,
+    ) -> I32Query<'c, 'a, 's, C, i32, 16> {
         self.bind(
             client,
             &params.name,
@@ -206,7 +188,6 @@ impl<
             &params.song_id,
             &params.visibility,
             &params.user_id,
-            &params.gjp2,
         )
     }
 }

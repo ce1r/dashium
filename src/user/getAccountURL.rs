@@ -1,3 +1,3 @@
 pub async fn getAccountURL() -> &'static str {
-    "0.0.0.0:64842"
+    "127.0.0.1"
 }

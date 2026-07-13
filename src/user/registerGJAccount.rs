@@ -1,12 +1,14 @@
-use axum_extra::extract::Form;
-use cornucopia::queries::user::create_user;
-use cornucopia::tokio_postgres::error::SqlState;
-use serde::Deserialize;
-
 use crate::Database;
 use crate::Result;
 use crate::util::is_ascii_alphanumeric;
 use crate::util::salt_and_sha1;
+use axum_extra::extract::Form;
+use cornucopia::queries::user::create_user;
+use cornucopia::tokio_postgres::error::SqlState;
+use rand::TryRng;
+use serde::Deserialize;
+use sha2::Digest;
+use sha2::Sha256;
 
 #[derive(Deserialize)]
 pub struct Data {
@@ -40,31 +42,41 @@ pub async fn registerGJAccount(Form(form): Form<Data>) -> Result<String> {
 
     let gjp2 = salt_and_sha1(&form.password, "mI29fmAnxgTs");
 
+    let mut salt = [0u8; 16];
+    rand::rng().try_fill_bytes(&mut salt);
+
+    let mut hasher = Sha256::new();
+    hasher.update(gjp2);
+    hasher.update(salt);
+    let hash = hasher.finalize();
+
     let result = create_user()
-        .bind(&client, &form.userName, &form.email, &gjp2)
+        .bind(
+            &client,
+            &form.userName,
+            &form.email,
+            &hash.to_vec(),
+            &salt.to_vec(),
+        )
         .await;
 
     match result {
         Ok(_) => Ok("1".to_string()),
         Err(e) => {
-            if let Some(db_err) = e.as_db_error() {
-                match db_err.code() {
-                    &SqlState::UNIQUE_VIOLATION => {
-                        if let Some(constraint) = db_err.constraint() {
-                            match constraint {
-                                "unique_username" => Ok("-2".to_string()),
-                                "unique_email" => Ok("-3".to_string()),
-                                _ => Ok("-1".to_string()),
-                            }
-                        } else {
-                            Ok("-1".to_string())
-                        }
-                    }
-                    _ => Ok("-1".to_string()),
-                }
-            } else {
-                Ok("-1".to_string())
+            let Some(db_err) = e.as_db_error() else {
+                return Ok("-1".to_string());
+            };
+
+            if db_err.code() != &SqlState::UNIQUE_VIOLATION {
+                return Ok("-1".to_string());
             }
+
+            Ok(match db_err.constraint() {
+                Some("unique_username") => "-2",
+                Some("unique_email") => "-3",
+                _ => "-1",
+            }
+            .to_string())
         }
     }
 }

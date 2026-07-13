@@ -1,9 +1,9 @@
+use crate::Database;
+use crate::Result;
+use crate::util::verify_gjp2;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::save_data;
 use serde::Deserialize;
-
-use crate::Database;
-use crate::Result;
 
 #[derive(Deserialize)]
 pub struct Data {
@@ -14,9 +14,10 @@ pub struct Data {
 
 pub async fn backupGJAccountNew(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
+    verify_gjp2(form.accountID, &form.gjp2).await?;
 
     save_data()
-        .bind(&client, &form.saveData, &form.accountID, &form.gjp2)
+        .bind(&client, &form.saveData, &form.accountID)
         .await?;
 
     Ok("1".to_string())

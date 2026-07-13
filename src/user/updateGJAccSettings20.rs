@@ -1,9 +1,9 @@
+use crate::Database;
+use crate::Result;
+use crate::util::verify_gjp2;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::update_settings;
 use serde::Deserialize;
-
-use crate::Database;
-use crate::Result;
 
 #[derive(Deserialize)]
 pub struct Data {
@@ -22,6 +22,7 @@ pub struct Data {
 
 pub async fn updateGJAccSettings20(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
+    verify_gjp2(form.accountID, &form.gjp2).await?;
 
     update_settings()
         .bind(
@@ -36,7 +37,6 @@ pub async fn updateGJAccSettings20(Form(form): Form<Data>) -> Result<String> {
             &form.instagram,
             &form.tiktok,
             &form.accountID,
-            &form.gjp2,
         )
         .await?;
 

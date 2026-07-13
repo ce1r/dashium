@@ -1,3 +1,6 @@
+use crate::Database;
+use crate::Result;
+use crate::util::verify_gjp2;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
@@ -5,9 +8,6 @@ use cornucopia::queries::level::create_level;
 use serde::Deserialize;
 use serde_with::BoolFromInt;
 use serde_with::serde_as;
-
-use crate::Database;
-use crate::Result;
 
 #[serde_as]
 #[derive(Deserialize)]
@@ -43,6 +43,8 @@ pub struct Data {
 
 pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
+    verify_gjp2(form.accountID, &form.gjp2).await?;
+
     let description_bytes = URL_SAFE.decode(&form.levelDesc)?;
     let description = String::from_utf8(description_bytes)?;
 
@@ -65,7 +67,6 @@ pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<String> {
             &form.songID,
             &form.unlisted,
             &form.accountID,
-            &form.gjp2,
         )
         .one()
         .await?;

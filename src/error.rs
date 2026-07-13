@@ -4,8 +4,7 @@ use axum::response::Response;
 
 pub type Result<T> = std::result::Result<T, AppError>;
 
-#[allow(dead_code)]
-pub struct AppError(anyhow::Error);
+pub struct AppError;
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
@@ -17,7 +16,7 @@ impl<E> From<E> for AppError
 where
     E: Into<anyhow::Error>,
 {
-    fn from(err: E) -> Self {
-        Self(err.into())
+    fn from(_: E) -> Self {
+        Self
     }
 }

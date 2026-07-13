@@ -1,16 +1,15 @@
+use crate::Database;
+use crate::Result;
+use crate::gd_format;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
 use cornucopia::queries::post::get_posts;
 use serde::Deserialize;
 
-use crate::Database;
-use crate::Result;
-use crate::gd_format;
-
 #[derive(Deserialize)]
 pub struct Data {
-    accountID: i32,
+    accountID: Vec<i32>,
     page: i64,
 }
 
@@ -19,7 +18,7 @@ pub async fn getGJAccountComments20(Form(form): Form<Data>) -> Result<String> {
     let offset = form.page * 10;
 
     let posts = get_posts()
-        .bind(&client, &form.accountID, &offset)
+        .bind(&client, &form.accountID[0], &offset)
         .all()
         .await?;
 

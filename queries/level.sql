@@ -46,5 +46,4 @@ SELECT
     :visibility
 FROM users
 WHERE id = :user_id
-    AND gjp2 = :gjp2
 RETURNING id;

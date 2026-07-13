@@ -1,6 +1,7 @@
 #![allow(non_snake_case)]
 
 use axum::Router;
+use tower_http::trace::TraceLayer;
 
 mod database;
 mod error;
@@ -15,10 +16,12 @@ pub use database::Database;
 pub use error::Result;
 
 pub fn setup() -> Router {
-    Router::new().merge(routes())
+    Router::new()
+        .nest("/api/legacy", gd_routes())
+        .layer(TraceLayer::new_for_http())
 }
 
-pub fn routes() -> Router {
+pub fn gd_routes() -> Router {
     Router::new()
         .merge(user::routes())
         .merge(post::routes())

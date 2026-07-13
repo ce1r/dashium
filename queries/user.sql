@@ -1,12 +1,21 @@
+--! get_hash_and_salt
+SELECT
+    hash,
+    salt
+FROM users
+WHERE id = :user_id;
+
 --! create_user
 INSERT INTO users (
     username,
     email,
-    gjp2
+    hash,
+    salt
 ) VALUES (
     :username,
     :email,
-    :gjp2
+    :hash,
+    :salt
 );
 
 --! get_user
@@ -59,20 +68,17 @@ WHERE id = :id;
 UPDATE users
 SET udid = :udid
 WHERE username = :username
-    AND gjp2 = :gjp2
-RETURNING id;
+RETURNING id, hash, salt;
 
 --! save_data
 UPDATE users
 SET save_data = :save_data
-WHERE id = :user_id
-    AND gjp2 = :gjp2;
+WHERE id = :user_id;
 
 --! load_data
 SELECT save_data
 FROM users
-WHERE id = :user_id
-    AND gjp2 = :gjp2;
+WHERE id = :user_id;
 
 --! save_stats
 UPDATE users
@@ -102,14 +108,12 @@ SET
     color2 = :color2,
     color3 = :color3
 WHERE id = :user_id
-    AND gjp2 = :gjp2
 RETURNING id;
 
 --! get_mod_level
 SELECT mod_level
 FROM users
-WHERE id = :user_id
-    AND gjp2 = :gjp2;
+WHERE id = :user_id;
 
 --! update_settings
 UPDATE users
@@ -123,8 +127,7 @@ SET
     discord = :discord,
     instagram = :instagram,
     tiktok = :tiktok
-WHERE id = :user_id
-    AND gjp2 = :gjp2;
+WHERE id = :user_id;
 
 --! search_users
 SELECT
@@ -150,3 +153,8 @@ FROM users
 WHERE username ILIKE '%' || :search || '%'
     AND id != :user_id
 LIMIT 10 OFFSET :offset;
+
+--! get_udid
+SELECT udid
+FROM users
+WHERE id = :user_id;

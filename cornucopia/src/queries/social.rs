@@ -1,31 +1,28 @@
 // This file was generated with `cornucopia`. Do not modify.
 
-#[derive(Debug)]
-pub struct BlockUserParams<T1: crate::StringSql> {
+#[derive(Clone, Copy, Debug)]
+pub struct BlockUserParams {
     pub user_id: i32,
     pub target_id: i32,
-    pub gjp2: T1,
 }
-#[derive(Debug)]
-pub struct UnblockUserParams<T1: crate::StringSql> {
+#[derive(Clone, Copy, Debug)]
+pub struct UnblockUserParams {
     pub user_id: i32,
     pub target_id: i32,
-    pub gjp2: T1,
 }
 #[derive(Debug)]
-pub struct CreateMessageParams<T1: crate::StringSql, T2: crate::StringSql, T3: crate::StringSql> {
+pub struct CreateMessageParams<T1: crate::StringSql, T2: crate::StringSql> {
     pub user_id: i32,
     pub target_id: i32,
     pub subject: T1,
     pub body: T2,
-    pub gjp2: T3,
 }
 use crate::client::async_::GenericClient;
 use futures::{self, StreamExt, TryStreamExt};
 pub struct BlockUserStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn block_user() -> BlockUserStmt {
     BlockUserStmt(
-        "INSERT INTO blocks ( user_id, target_id ) SELECT $1, $2 WHERE EXISTS ( SELECT 1 FROM users WHERE id = $1 AND gjp2 = $3 )",
+        "INSERT INTO blocks ( user_id, target_id ) SELECT $1, $2 WHERE EXISTS ( SELECT 1 FROM users WHERE id = $1 )",
         None,
     )
 }
@@ -37,22 +34,21 @@ impl BlockUserStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub async fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+    pub async fn bind<'c, 'a, 's, C: GenericClient>(
         &'s self,
         client: &'c C,
         user_id: &'a i32,
         target_id: &'a i32,
-        gjp2: &'a T1,
     ) -> Result<u64, tokio_postgres::Error> {
-        client.execute(self.0, &[user_id, target_id, gjp2]).await
+        client.execute(self.0, &[user_id, target_id]).await
     }
 }
-impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql>
+impl<'a, C: GenericClient + Send + Sync>
     crate::client::async_::Params<
         'a,
         'a,
         'a,
-        BlockUserParams<T1>,
+        BlockUserParams,
         std::pin::Pin<
             Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
         >,
@@ -62,17 +58,17 @@ impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql>
     fn params(
         &'a self,
         client: &'a C,
-        params: &'a BlockUserParams<T1>,
+        params: &'a BlockUserParams,
     ) -> std::pin::Pin<
         Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
     > {
-        Box::pin(self.bind(client, &params.user_id, &params.target_id, &params.gjp2))
+        Box::pin(self.bind(client, &params.user_id, &params.target_id))
     }
 }
 pub struct UnblockUserStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn unblock_user() -> UnblockUserStmt {
     UnblockUserStmt(
-        "DELETE FROM blocks USING users WHERE blocks.user_id = users.id AND blocks.user_id = $1 AND blocks.target_id = $2 AND users.gjp2 = $3",
+        "DELETE FROM blocks WHERE user_id = $1 AND target_id = $2",
         None,
     )
 }
@@ -84,22 +80,21 @@ impl UnblockUserStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub async fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+    pub async fn bind<'c, 'a, 's, C: GenericClient>(
         &'s self,
         client: &'c C,
         user_id: &'a i32,
         target_id: &'a i32,
-        gjp2: &'a T1,
     ) -> Result<u64, tokio_postgres::Error> {
-        client.execute(self.0, &[user_id, target_id, gjp2]).await
+        client.execute(self.0, &[user_id, target_id]).await
     }
 }
-impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql>
+impl<'a, C: GenericClient + Send + Sync>
     crate::client::async_::Params<
         'a,
         'a,
         'a,
-        UnblockUserParams<T1>,
+        UnblockUserParams,
         std::pin::Pin<
             Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
         >,
@@ -109,17 +104,17 @@ impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql>
     fn params(
         &'a self,
         client: &'a C,
-        params: &'a UnblockUserParams<T1>,
+        params: &'a UnblockUserParams,
     ) -> std::pin::Pin<
         Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
     > {
-        Box::pin(self.bind(client, &params.user_id, &params.target_id, &params.gjp2))
+        Box::pin(self.bind(client, &params.user_id, &params.target_id))
     }
 }
 pub struct CreateMessageStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn create_message() -> CreateMessageStmt {
     CreateMessageStmt(
-        "INSERT INTO messages ( user_id, target_id, subject, body ) SELECT $1, $2, $3, $4 FROM users WHERE id = $1 AND gjp2 = $5",
+        "INSERT INTO messages ( user_id, target_id, subject, body ) SELECT $1, $2, $3, $4 FROM users WHERE id = $1",
         None,
     )
 }
@@ -131,40 +126,25 @@ impl CreateMessageStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub async fn bind<
-        'c,
-        'a,
-        's,
-        C: GenericClient,
-        T1: crate::StringSql,
-        T2: crate::StringSql,
-        T3: crate::StringSql,
-    >(
+    pub async fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>(
         &'s self,
         client: &'c C,
         user_id: &'a i32,
         target_id: &'a i32,
         subject: &'a T1,
         body: &'a T2,
-        gjp2: &'a T3,
     ) -> Result<u64, tokio_postgres::Error> {
         client
-            .execute(self.0, &[user_id, target_id, subject, body, gjp2])
+            .execute(self.0, &[user_id, target_id, subject, body])
             .await
     }
 }
-impl<
-    'a,
-    C: GenericClient + Send + Sync,
-    T1: crate::StringSql,
-    T2: crate::StringSql,
-    T3: crate::StringSql,
->
+impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql, T2: crate::StringSql>
     crate::client::async_::Params<
         'a,
         'a,
         'a,
-        CreateMessageParams<T1, T2, T3>,
+        CreateMessageParams<T1, T2>,
         std::pin::Pin<
             Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
         >,
@@ -174,7 +154,7 @@ impl<
     fn params(
         &'a self,
         client: &'a C,
-        params: &'a CreateMessageParams<T1, T2, T3>,
+        params: &'a CreateMessageParams<T1, T2>,
     ) -> std::pin::Pin<
         Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
     > {
@@ -184,7 +164,6 @@ impl<
             &params.target_id,
             &params.subject,
             &params.body,
-            &params.gjp2,
         ))
     }
 }
