@@ -1,3 +1,5 @@
+--: Message(id, user_id, target_id, subject, body, is_read, created_at, username)
+
 --! block_user
 INSERT INTO blocks (
     user_id,
@@ -31,3 +33,23 @@ SELECT
     :body
 FROM users
 WHERE id = :user_id;
+
+--! get_messages : Message
+SELECT
+    m.*,
+    u.username
+FROM messages m
+JOIN users u ON m.user_id = u.id
+WHERE m.target_id = :target_id
+ORDER BY m.created_at DESC
+LIMIT 10 OFFSET :offset;
+
+--! get_sent_messages : Message
+SELECT
+    m.*,
+    u.username
+FROM messages m
+JOIN users u ON m.target_id = u.id
+WHERE m.user_id = :user_id
+ORDER BY m.created_at DESC
+LIMIT 10 OFFSET :offset;
