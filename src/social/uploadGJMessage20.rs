@@ -26,7 +26,7 @@ pub async fn uploadGJMessage20(Form(form): Form<Data>) -> Result<String> {
     let body = String::from_utf8(body)?;
 
     let client = Database::acquire().await?;
-    verify_gjp2(form.accountID, &form.gjp2).await?;
+    verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     create_message()
         .bind(&client, &form.accountID, &form.toAccountID, &subject, &body)

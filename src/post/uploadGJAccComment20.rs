@@ -19,7 +19,7 @@ pub async fn uploadGJAccComment20(Form(form): Form<Data>) -> Result<String> {
     let body = String::from_utf8(decoded)?;
 
     let client = Database::acquire().await?;
-    verify_gjp2(form.accountID, &form.gjp2).await?;
+    verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     let comment_id = create_post()
         .bind(&client, &form.accountID, &body)

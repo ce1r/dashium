@@ -22,7 +22,7 @@ pub struct Data {
 
 pub async fn getGJMessages20(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
-    verify_gjp2(form.accountID, &form.gjp2).await?;
+    verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     let offset = form.page * 10;
     let get_sent = matches!(form.getSent, 1);

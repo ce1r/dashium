@@ -14,7 +14,7 @@ pub struct Data {
 
 pub async fn unblockGJUser20(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
-    verify_gjp2(form.accountID, &form.gjp2).await?;
+    verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     unblock_user()
         .bind(&client, &form.accountID, &form.targetAccountID)

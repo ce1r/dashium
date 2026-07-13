@@ -64,3 +64,23 @@ WITH updated AS (
 SELECT updated.*, u.username
 FROM updated
 JOIN users u ON updated.user_id = u.id;
+
+--! delete_message
+DELETE FROM messages
+WHERE id = :message_id
+    AND target_id = :user_id;
+
+--! delete_sent_message
+DELETE FROM messages
+WHERE id = :message_id
+    AND user_id = :user_id;
+
+--! delete_messages
+DELETE FROM messages
+WHERE target_id = :user_id
+    AND id = ANY(:message_ids);
+
+--! delete_sent_messages
+DELETE FROM messages
+WHERE user_id = :user_id
+    AND id = ANY(:message_ids);

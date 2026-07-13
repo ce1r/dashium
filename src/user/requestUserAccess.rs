@@ -13,7 +13,7 @@ pub struct Data {
 
 pub async fn requestUserAccess(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
-    verify_gjp2(form.accountID, &form.gjp2).await?;
+    verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     let mod_level = get_mod_level().bind(&client, &form.accountID).one().await?;
 

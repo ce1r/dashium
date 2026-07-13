@@ -2,6 +2,7 @@ use axum::Router;
 use axum::routing::post;
 
 mod blockGJUser20;
+mod deleteGJMessages20;
 mod downloadGJMessage20;
 mod getGJMessages20;
 mod unblockGJUser20;
@@ -25,5 +26,9 @@ pub fn routes() -> Router {
         .route(
             "/downloadGJMessage20.php",
             post(downloadGJMessage20::downloadGJMessage20),
+        )
+        .route(
+            "/deleteGJMessages20.php",
+            post(deleteGJMessages20::deleteGJMessages20),
         )
 }
