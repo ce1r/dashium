@@ -1,5 +1,6 @@
---: Message(id, user_id, target_id, subject, body, is_read, created_at, username)
---: FriendRequest(id, user_id, target_id, body, is_new, created_at, username, icon, color1, color2, icon_type, glow)
+--: Message()
+--: FriendRequest()
+--: User ()
 
 --! block_user
 INSERT INTO blocks (
@@ -155,3 +156,23 @@ INSERT INTO friendships (
     :user_id,
     :target_id
 );
+
+--! get_friend_list: User
+SELECT u.*
+FROM users u
+WHERE u.id IN (
+    SELECT user2 FROM friendships WHERE user1 = :user_id
+    UNION
+    SELECT user1 FROM friendships WHERE user2 = :user_id
+)
+ORDER BY u.username ASC;
+
+--! get_blocked_list: User
+SELECT u.*
+FROM users u
+WHERE u.id IN (
+    SELECT target_id
+    FROM blocks
+    WHERE user_id = :user_id
+)
+ORDER BY u.username ASC;

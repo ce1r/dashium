@@ -7,7 +7,10 @@ use cornucopia::queries::social::delete_messages;
 use cornucopia::queries::social::delete_sent_message;
 use cornucopia::queries::social::delete_sent_messages;
 use serde::Deserialize;
+use serde_with::BoolFromInt;
+use serde_with::serde_as;
 
+#[serde_as]
 #[derive(Deserialize)]
 pub struct Data {
     accountID: i32,
@@ -19,18 +22,17 @@ pub struct Data {
     #[serde(default)]
     messageID: i32,
 
+    #[serde_as(as = "BoolFromInt")]
     #[serde(default)]
-    isSender: u8,
+    isSender: bool,
 }
 
 pub async fn deleteGJMessages20(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
     verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
-    let is_sender = matches!(form.isSender, 1);
-
     if form.messages.is_empty() {
-        if is_sender {
+        if form.isSender {
             delete_sent_message()
                 .bind(&client, &form.messageID, &form.accountID)
                 .await?;
@@ -46,7 +48,7 @@ pub async fn deleteGJMessages20(Form(form): Form<Data>) -> Result<String> {
             .filter_map(|s| s.trim().parse().ok())
             .collect();
 
-        if is_sender {
+        if form.isSender {
             delete_sent_messages()
                 .bind(&client, &form.messageID, &message_ids)
                 .await?;

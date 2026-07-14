@@ -9,15 +9,19 @@ use chrono_humanize::HumanTime;
 use cornucopia::queries::social::get_friend_requests;
 use cornucopia::queries::social::get_sent_friend_requests;
 use serde::Deserialize;
+use serde_with::BoolFromInt;
+use serde_with::serde_as;
 
+#[serde_as]
 #[derive(Deserialize)]
 pub struct Data {
     accountID: i32,
     gjp2: String,
     page: i64,
 
+    #[serde_as(as = "BoolFromInt")]
     #[serde(default)]
-    getSent: u8,
+    getSent: bool,
 }
 
 pub async fn getGJFriendRequests20(Form(form): Form<Data>) -> Result<String> {
@@ -25,9 +29,8 @@ pub async fn getGJFriendRequests20(Form(form): Form<Data>) -> Result<String> {
     verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     let offset = form.page * 10;
-    let get_sent = matches!(form.getSent, 1);
 
-    let friend_requests = if get_sent {
+    let friend_requests = if form.getSent {
         get_sent_friend_requests()
             .bind(&client, &form.accountID, &offset)
             .all()
@@ -48,7 +51,12 @@ pub async fn getGJFriendRequests20(Form(form): Form<Data>) -> Result<String> {
     let response = friend_requests
         .iter()
         .map(|fr| {
-            let user_id = if get_sent { fr.target_id } else { fr.user_id };
+            let user_id = if form.getSent {
+                fr.target_id
+            } else {
+                fr.user_id
+            };
+
             let body = URL_SAFE.encode(&fr.body);
             let is_new = u8::from(fr.is_new);
             let created_at = HumanTime::from(fr.created_at)

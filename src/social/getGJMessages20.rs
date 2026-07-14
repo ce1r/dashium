@@ -9,15 +9,19 @@ use chrono_humanize::HumanTime;
 use cornucopia::queries::social::get_messages;
 use cornucopia::queries::social::get_sent_messages;
 use serde::Deserialize;
+use serde_with::BoolFromInt;
+use serde_with::serde_as;
 
+#[serde_as]
 #[derive(Deserialize)]
 pub struct Data {
     accountID: i32,
     gjp2: String,
     page: i64,
 
+    #[serde_as(as = "BoolFromInt")]
     #[serde(default)]
-    getSent: u8,
+    getSent: bool,
 }
 
 pub async fn getGJMessages20(Form(form): Form<Data>) -> Result<String> {
@@ -25,9 +29,8 @@ pub async fn getGJMessages20(Form(form): Form<Data>) -> Result<String> {
     verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     let offset = form.page * 10;
-    let get_sent = matches!(form.getSent, 1);
 
-    let messages = if get_sent {
+    let messages = if form.getSent {
         get_sent_messages()
             .bind(&client, &form.accountID, &offset)
             .all()
@@ -48,12 +51,13 @@ pub async fn getGJMessages20(Form(form): Form<Data>) -> Result<String> {
     let response = messages
         .iter()
         .map(|m| {
-            let user_id = if get_sent { m.target_id } else { m.user_id };
+            let user_id = if form.getSent { m.target_id } else { m.user_id };
             let is_read = u8::from(m.is_read);
             let subject = URL_SAFE.encode(&m.subject);
             let created_at = HumanTime::from(m.created_at)
                 .to_string()
                 .replace(" ago", "");
+            let get_sent = u8::from(form.getSent);
 
             gd_format!(
                 ":",
@@ -63,7 +67,7 @@ pub async fn getGJMessages20(Form(form): Form<Data>) -> Result<String> {
                 6 => m.username,
                 7 => created_at,
                 8 => is_read,
-                9 => form.getSent,
+                9 => get_sent,
             )
         })
         .collect::<Vec<_>>()
