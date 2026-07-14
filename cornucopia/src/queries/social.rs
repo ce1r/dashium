@@ -32,16 +32,6 @@ pub struct DownloadMessageParams {
     pub message_id: i32,
     pub target_id: i32,
 }
-#[derive(Clone, Copy, Debug)]
-pub struct DeleteMessageParams {
-    pub message_id: i32,
-    pub user_id: i32,
-}
-#[derive(Clone, Copy, Debug)]
-pub struct DeleteSentMessageParams {
-    pub message_id: i32,
-    pub user_id: i32,
-}
 #[derive(Debug)]
 pub struct DeleteMessagesParams<T1: crate::ArraySql<Item = i32>> {
     pub user_id: i32,
@@ -72,6 +62,11 @@ pub struct GetSentFriendRequestsParams {
 pub struct AcceptFriendRequestParams {
     pub user_id: i32,
     pub target_id: i32,
+}
+#[derive(Debug)]
+pub struct DeleteFriendRequestsParams<T1: crate::ArraySql<Item = i32>> {
+    pub user_id: i32,
+    pub target_ids: T1,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Message {
@@ -891,95 +886,6 @@ impl<'c, 'a, 's, C: GenericClient>
         self.bind(client, &params.message_id, &params.target_id)
     }
 }
-pub struct DeleteMessageStmt(&'static str, Option<tokio_postgres::Statement>);
-pub fn delete_message() -> DeleteMessageStmt {
-    DeleteMessageStmt(
-        "DELETE FROM messages WHERE id = $1 AND target_id = $2",
-        None,
-    )
-}
-impl DeleteMessageStmt {
-    pub async fn prepare<'a, C: GenericClient>(
-        mut self,
-        client: &'a C,
-    ) -> Result<Self, tokio_postgres::Error> {
-        self.1 = Some(client.prepare(self.0).await?);
-        Ok(self)
-    }
-    pub async fn bind<'c, 'a, 's, C: GenericClient>(
-        &'s self,
-        client: &'c C,
-        message_id: &'a i32,
-        user_id: &'a i32,
-    ) -> Result<u64, tokio_postgres::Error> {
-        client.execute(self.0, &[message_id, user_id]).await
-    }
-}
-impl<'a, C: GenericClient + Send + Sync>
-    crate::client::async_::Params<
-        'a,
-        'a,
-        'a,
-        DeleteMessageParams,
-        std::pin::Pin<
-            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
-        >,
-        C,
-    > for DeleteMessageStmt
-{
-    fn params(
-        &'a self,
-        client: &'a C,
-        params: &'a DeleteMessageParams,
-    ) -> std::pin::Pin<
-        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
-    > {
-        Box::pin(self.bind(client, &params.message_id, &params.user_id))
-    }
-}
-pub struct DeleteSentMessageStmt(&'static str, Option<tokio_postgres::Statement>);
-pub fn delete_sent_message() -> DeleteSentMessageStmt {
-    DeleteSentMessageStmt("DELETE FROM messages WHERE id = $1 AND user_id = $2", None)
-}
-impl DeleteSentMessageStmt {
-    pub async fn prepare<'a, C: GenericClient>(
-        mut self,
-        client: &'a C,
-    ) -> Result<Self, tokio_postgres::Error> {
-        self.1 = Some(client.prepare(self.0).await?);
-        Ok(self)
-    }
-    pub async fn bind<'c, 'a, 's, C: GenericClient>(
-        &'s self,
-        client: &'c C,
-        message_id: &'a i32,
-        user_id: &'a i32,
-    ) -> Result<u64, tokio_postgres::Error> {
-        client.execute(self.0, &[message_id, user_id]).await
-    }
-}
-impl<'a, C: GenericClient + Send + Sync>
-    crate::client::async_::Params<
-        'a,
-        'a,
-        'a,
-        DeleteSentMessageParams,
-        std::pin::Pin<
-            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
-        >,
-        C,
-    > for DeleteSentMessageStmt
-{
-    fn params(
-        &'a self,
-        client: &'a C,
-        params: &'a DeleteSentMessageParams,
-    ) -> std::pin::Pin<
-        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
-    > {
-        Box::pin(self.bind(client, &params.message_id, &params.user_id))
-    }
-}
 pub struct DeleteMessagesStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn delete_messages() -> DeleteMessagesStmt {
     DeleteMessagesStmt(
@@ -1466,5 +1372,51 @@ impl GetBlockedListStmt {
             },
             mapper: |it| User::from(it),
         }
+    }
+}
+pub struct DeleteFriendRequestsStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn delete_friend_requests() -> DeleteFriendRequestsStmt {
+    DeleteFriendRequestsStmt(
+        "DELETE FROM friend_requests WHERE user_id = $1 AND target_id = ANY($2)",
+        None,
+    )
+}
+impl DeleteFriendRequestsStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub async fn bind<'c, 'a, 's, C: GenericClient, T1: crate::ArraySql<Item = i32>>(
+        &'s self,
+        client: &'c C,
+        user_id: &'a i32,
+        target_ids: &'a T1,
+    ) -> Result<u64, tokio_postgres::Error> {
+        client.execute(self.0, &[user_id, target_ids]).await
+    }
+}
+impl<'a, C: GenericClient + Send + Sync, T1: crate::ArraySql<Item = i32>>
+    crate::client::async_::Params<
+        'a,
+        'a,
+        'a,
+        DeleteFriendRequestsParams<T1>,
+        std::pin::Pin<
+            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+        >,
+        C,
+    > for DeleteFriendRequestsStmt
+{
+    fn params(
+        &'a self,
+        client: &'a C,
+        params: &'a DeleteFriendRequestsParams<T1>,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+    > {
+        Box::pin(self.bind(client, &params.user_id, &params.target_ids))
     }
 }

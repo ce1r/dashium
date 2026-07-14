@@ -2,9 +2,7 @@ use crate::Database;
 use crate::Result;
 use crate::util::verify_gjp2;
 use axum_extra::extract::Form;
-use cornucopia::queries::social::delete_message;
 use cornucopia::queries::social::delete_messages;
-use cornucopia::queries::social::delete_sent_message;
 use cornucopia::queries::social::delete_sent_messages;
 use serde::Deserialize;
 use serde_with::BoolFromInt;
@@ -33,12 +31,12 @@ pub async fn deleteGJMessages20(Form(form): Form<Data>) -> Result<String> {
 
     if form.messages.is_empty() {
         if form.isSender {
-            delete_sent_message()
-                .bind(&client, &form.messageID, &form.accountID)
+            delete_sent_messages()
+                .bind(&client, &form.messageID, &vec![form.accountID])
                 .await?;
         } else {
-            delete_message()
-                .bind(&client, &form.messageID, &form.accountID)
+            delete_messages()
+                .bind(&client, &form.messageID, &vec![form.accountID])
                 .await?;
         }
     } else {
