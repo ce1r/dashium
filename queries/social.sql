@@ -1,4 +1,5 @@
 --: Message(id, user_id, target_id, subject, body, is_read, created_at, username)
+--: FriendRequest(id, user_id, target_id, body, is_new, created_at, username, icon, color1, color2, icon_type, glow)
 
 --! block_user
 INSERT INTO blocks (
@@ -95,3 +96,43 @@ INSERT INTO friend_requests (
     :target_id,
     :body
 );
+
+--! get_friend_requests: FriendRequest
+SELECT
+    fr.id,
+    fr.user_id,
+    fr.target_id,
+    fr.body,
+    fr.is_new,
+    fr.created_at,
+    u.username,
+    u.icon,
+    u.color1,
+    u.color2,
+    u.icon_type,
+    u.glow
+FROM friend_requests fr
+JOIN users u on u.id = fr.user_id
+WHERE fr.target_id = :user_id
+ORDER BY fr.created_at DESC
+LIMIT 20 OFFSET :offset;
+
+--! get_sent_friend_requests: FriendRequest
+SELECT
+    fr.id,
+    fr.user_id,
+    fr.target_id,
+    fr.body,
+    fr.is_new,
+    fr.created_at,
+    u.username,
+    u.icon,
+    u.color1,
+    u.color2,
+    u.icon_type,
+    u.glow
+FROM friend_requests fr
+JOIN users u on u.id = fr.target_id
+WHERE fr.user_id = :user_id
+ORDER BY fr.created_at DESC
+LIMIT 20 OFFSET :offset;

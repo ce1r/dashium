@@ -58,6 +58,16 @@ pub struct CreateFriendRequestParams<T1: crate::StringSql> {
     pub target_id: i32,
     pub body: T1,
 }
+#[derive(Clone, Copy, Debug)]
+pub struct GetFriendRequestsParams {
+    pub user_id: i32,
+    pub offset: i64,
+}
+#[derive(Clone, Copy, Debug)]
+pub struct GetSentFriendRequestsParams {
+    pub user_id: i32,
+    pub offset: i64,
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct Message {
     pub id: i32,
@@ -104,6 +114,68 @@ impl<'a> From<MessageBorrowed<'a>> for Message {
         }
     }
 }
+#[derive(Debug, Clone, PartialEq)]
+pub struct FriendRequest {
+    pub id: i32,
+    pub user_id: i32,
+    pub target_id: i32,
+    pub body: String,
+    pub is_new: bool,
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub username: String,
+    pub icon: i16,
+    pub color1: i16,
+    pub color2: i16,
+    pub icon_type: i16,
+    pub glow: i16,
+}
+pub struct FriendRequestBorrowed<'a> {
+    pub id: i32,
+    pub user_id: i32,
+    pub target_id: i32,
+    pub body: &'a str,
+    pub is_new: bool,
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub username: &'a str,
+    pub icon: i16,
+    pub color1: i16,
+    pub color2: i16,
+    pub icon_type: i16,
+    pub glow: i16,
+}
+impl<'a> From<FriendRequestBorrowed<'a>> for FriendRequest {
+    fn from(
+        FriendRequestBorrowed {
+            id,
+            user_id,
+            target_id,
+            body,
+            is_new,
+            created_at,
+            username,
+            icon,
+            color1,
+            color2,
+            icon_type,
+            glow,
+        }: FriendRequestBorrowed<'a>,
+    ) -> Self {
+        Self {
+            id,
+            user_id,
+            target_id,
+            body: body.into(),
+            is_new,
+            created_at,
+            username: username.into(),
+            icon,
+            color1,
+            color2,
+            icon_type,
+            glow,
+        }
+    }
+}
 use crate::client::async_::GenericClient;
 use futures::{self, StreamExt, TryStreamExt};
 pub struct MessageQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
@@ -120,6 +192,73 @@ where
 {
     pub fn map<R>(self, mapper: fn(MessageBorrowed) -> R) -> MessageQuery<'c, 'a, 's, C, R, N> {
         MessageQuery {
+            client: self.client,
+            params: self.params,
+            query: self.query,
+            cached: self.cached,
+            extractor: self.extractor,
+            mapper,
+        }
+    }
+    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
+        let row =
+            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
+        Ok((self.mapper)((self.extractor)(&row)?))
+    }
+    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
+        self.iter().await?.try_collect().await
+    }
+    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
+        let opt_row =
+            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
+        Ok(opt_row
+            .map(|row| {
+                let extracted = (self.extractor)(&row)?;
+                Ok((self.mapper)(extracted))
+            })
+            .transpose()?)
+    }
+    pub async fn iter(
+        self,
+    ) -> Result<
+        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
+        tokio_postgres::Error,
+    > {
+        let stream = crate::client::async_::raw(
+            self.client,
+            self.query,
+            crate::slice_iter(&self.params),
+            self.cached,
+        )
+        .await?;
+        let mapped = stream
+            .map(move |res| {
+                res.and_then(|row| {
+                    let extracted = (self.extractor)(&row)?;
+                    Ok((self.mapper)(extracted))
+                })
+            })
+            .into_stream();
+        Ok(mapped)
+    }
+}
+pub struct FriendRequestQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+    client: &'c C,
+    params: [&'a (dyn postgres_types::ToSql + Sync); N],
+    query: &'static str,
+    cached: Option<&'s tokio_postgres::Statement>,
+    extractor: fn(&tokio_postgres::Row) -> Result<FriendRequestBorrowed, tokio_postgres::Error>,
+    mapper: fn(FriendRequestBorrowed) -> T,
+}
+impl<'c, 'a, 's, C, T: 'c, const N: usize> FriendRequestQuery<'c, 'a, 's, C, T, N>
+where
+    C: GenericClient,
+{
+    pub fn map<R>(
+        self,
+        mapper: fn(FriendRequestBorrowed) -> R,
+    ) -> FriendRequestQuery<'c, 'a, 's, C, R, N> {
+        FriendRequestQuery {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -727,5 +866,135 @@ impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql>
         Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
     > {
         Box::pin(self.bind(client, &params.user_id, &params.target_id, &params.body))
+    }
+}
+pub struct GetFriendRequestsStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_friend_requests() -> GetFriendRequestsStmt {
+    GetFriendRequestsStmt(
+        "SELECT fr.id, fr.user_id, fr.target_id, fr.body, fr.is_new, fr.created_at, u.username, u.icon, u.color1, u.color2, u.icon_type, u.glow FROM friend_requests fr JOIN users u on u.id = fr.user_id WHERE fr.target_id = $1 ORDER BY fr.created_at DESC LIMIT 20 OFFSET $2",
+        None,
+    )
+}
+impl GetFriendRequestsStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        user_id: &'a i32,
+        offset: &'a i64,
+    ) -> FriendRequestQuery<'c, 'a, 's, C, FriendRequest, 2> {
+        FriendRequestQuery {
+            client,
+            params: [user_id, offset],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor:
+                |row: &tokio_postgres::Row| -> Result<FriendRequestBorrowed, tokio_postgres::Error> {
+                    Ok(FriendRequestBorrowed {
+                        id: row.try_get(0)?,
+                        user_id: row.try_get(1)?,
+                        target_id: row.try_get(2)?,
+                        body: row.try_get(3)?,
+                        is_new: row.try_get(4)?,
+                        created_at: row.try_get(5)?,
+                        username: row.try_get(6)?,
+                        icon: row.try_get(7)?,
+                        color1: row.try_get(8)?,
+                        color2: row.try_get(9)?,
+                        icon_type: row.try_get(10)?,
+                        glow: row.try_get(11)?,
+                    })
+                },
+            mapper: |it| FriendRequest::from(it),
+        }
+    }
+}
+impl<'c, 'a, 's, C: GenericClient>
+    crate::client::async_::Params<
+        'c,
+        'a,
+        's,
+        GetFriendRequestsParams,
+        FriendRequestQuery<'c, 'a, 's, C, FriendRequest, 2>,
+        C,
+    > for GetFriendRequestsStmt
+{
+    fn params(
+        &'s self,
+        client: &'c C,
+        params: &'a GetFriendRequestsParams,
+    ) -> FriendRequestQuery<'c, 'a, 's, C, FriendRequest, 2> {
+        self.bind(client, &params.user_id, &params.offset)
+    }
+}
+pub struct GetSentFriendRequestsStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_sent_friend_requests() -> GetSentFriendRequestsStmt {
+    GetSentFriendRequestsStmt(
+        "SELECT fr.id, fr.user_id, fr.target_id, fr.body, fr.is_new, fr.created_at, u.username, u.icon, u.color1, u.color2, u.icon_type, u.glow FROM friend_requests fr JOIN users u on u.id = fr.target_id WHERE fr.user_id = $1 ORDER BY fr.created_at DESC LIMIT 20 OFFSET $2",
+        None,
+    )
+}
+impl GetSentFriendRequestsStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        user_id: &'a i32,
+        offset: &'a i64,
+    ) -> FriendRequestQuery<'c, 'a, 's, C, FriendRequest, 2> {
+        FriendRequestQuery {
+            client,
+            params: [user_id, offset],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor:
+                |row: &tokio_postgres::Row| -> Result<FriendRequestBorrowed, tokio_postgres::Error> {
+                    Ok(FriendRequestBorrowed {
+                        id: row.try_get(0)?,
+                        user_id: row.try_get(1)?,
+                        target_id: row.try_get(2)?,
+                        body: row.try_get(3)?,
+                        is_new: row.try_get(4)?,
+                        created_at: row.try_get(5)?,
+                        username: row.try_get(6)?,
+                        icon: row.try_get(7)?,
+                        color1: row.try_get(8)?,
+                        color2: row.try_get(9)?,
+                        icon_type: row.try_get(10)?,
+                        glow: row.try_get(11)?,
+                    })
+                },
+            mapper: |it| FriendRequest::from(it),
+        }
+    }
+}
+impl<'c, 'a, 's, C: GenericClient>
+    crate::client::async_::Params<
+        'c,
+        'a,
+        's,
+        GetSentFriendRequestsParams,
+        FriendRequestQuery<'c, 'a, 's, C, FriendRequest, 2>,
+        C,
+    > for GetSentFriendRequestsStmt
+{
+    fn params(
+        &'s self,
+        client: &'c C,
+        params: &'a GetSentFriendRequestsParams,
+    ) -> FriendRequestQuery<'c, 'a, 's, C, FriendRequest, 2> {
+        self.bind(client, &params.user_id, &params.offset)
     }
 }
