@@ -998,3 +998,26 @@ impl<'c, 'a, 's, C: GenericClient>
         self.bind(client, &params.user_id, &params.offset)
     }
 }
+pub struct ReadFriendRequestStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn read_friend_request() -> ReadFriendRequestStmt {
+    ReadFriendRequestStmt(
+        "UPDATE friend_requests SET is_new = FALSE WHERE id = $1",
+        None,
+    )
+}
+impl ReadFriendRequestStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub async fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        request_id: &'a i32,
+    ) -> Result<u64, tokio_postgres::Error> {
+        client.execute(self.0, &[request_id]).await
+    }
+}

@@ -6,6 +6,7 @@ mod deleteGJMessages20;
 mod downloadGJMessage20;
 mod getGJFriendRequests20;
 mod getGJMessages20;
+mod readGJFriendRequest20;
 mod unblockGJUser20;
 mod uploadFriendRequest20;
 mod uploadGJMessage20;
@@ -40,5 +41,9 @@ pub fn routes() -> Router {
         .route(
             "/getGJFriendRequests20.php",
             post(getGJFriendRequests20::getGJFriendRequests20),
+        )
+        .route(
+            "/readGJFriendRequest20.php",
+            post(readGJFriendRequest20::readGJFriendRequest20),
         )
 }

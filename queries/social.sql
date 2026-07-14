@@ -136,3 +136,8 @@ JOIN users u on u.id = fr.target_id
 WHERE fr.user_id = :user_id
 ORDER BY fr.created_at DESC
 LIMIT 20 OFFSET :offset;
+
+--! read_friend_request
+UPDATE friend_requests
+SET is_new = FALSE
+WHERE id = :request_id;
