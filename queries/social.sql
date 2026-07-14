@@ -141,3 +141,17 @@ LIMIT 20 OFFSET :offset;
 UPDATE friend_requests
 SET is_new = FALSE
 WHERE id = :request_id;
+
+--! accept_friend_request
+WITH _ AS (
+    DELETE FROM friend_requests
+    WHERE user_id = :user_id
+        AND target_id = :target_id
+)
+INSERT INTO friendships (
+    user1,
+    user2
+) VALUES (
+    :user_id,
+    :target_id
+);

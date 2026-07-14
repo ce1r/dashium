@@ -68,6 +68,11 @@ pub struct GetSentFriendRequestsParams {
     pub user_id: i32,
     pub offset: i64,
 }
+#[derive(Clone, Copy, Debug)]
+pub struct AcceptFriendRequestParams {
+    pub user_id: i32,
+    pub target_id: i32,
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct Message {
     pub id: i32,
@@ -1019,5 +1024,51 @@ impl ReadFriendRequestStmt {
         request_id: &'a i32,
     ) -> Result<u64, tokio_postgres::Error> {
         client.execute(self.0, &[request_id]).await
+    }
+}
+pub struct AcceptFriendRequestStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn accept_friend_request() -> AcceptFriendRequestStmt {
+    AcceptFriendRequestStmt(
+        "WITH _ AS ( DELETE FROM friend_requests WHERE user_id = $1 AND target_id = $2 ) INSERT INTO friendships ( user1, user2 ) VALUES ( $1, $2 )",
+        None,
+    )
+}
+impl AcceptFriendRequestStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub async fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        user_id: &'a i32,
+        target_id: &'a i32,
+    ) -> Result<u64, tokio_postgres::Error> {
+        client.execute(self.0, &[user_id, target_id]).await
+    }
+}
+impl<'a, C: GenericClient + Send + Sync>
+    crate::client::async_::Params<
+        'a,
+        'a,
+        'a,
+        AcceptFriendRequestParams,
+        std::pin::Pin<
+            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+        >,
+        C,
+    > for AcceptFriendRequestStmt
+{
+    fn params(
+        &'a self,
+        client: &'a C,
+        params: &'a AcceptFriendRequestParams,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+    > {
+        Box::pin(self.bind(client, &params.user_id, &params.target_id))
     }
 }

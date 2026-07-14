@@ -1,6 +1,7 @@
 use axum::Router;
 use axum::routing::post;
 
+mod acceptGJFriendRequest20;
 mod blockGJUser20;
 mod deleteGJMessages20;
 mod downloadGJMessage20;
@@ -45,5 +46,9 @@ pub fn routes() -> Router {
         .route(
             "/readGJFriendRequest20.php",
             post(readGJFriendRequest20::readGJFriendRequest20),
+        )
+        .route(
+            "/acceptGJFriendRequest20.php",
+            post(acceptGJFriendRequest20::acceptGJFriendRequest20),
         )
 }
