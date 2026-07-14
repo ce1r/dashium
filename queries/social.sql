@@ -84,3 +84,14 @@ WHERE target_id = :user_id
 DELETE FROM messages
 WHERE user_id = :user_id
     AND id = ANY(:message_ids);
+
+--! create_friend_request
+INSERT INTO friend_requests (
+    user_id,
+    target_id,
+    body
+) VALUES (
+    :user_id,
+    :target_id,
+    :body
+);

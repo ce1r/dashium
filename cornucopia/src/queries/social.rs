@@ -52,6 +52,12 @@ pub struct DeleteSentMessagesParams<T1: crate::ArraySql<Item = i32>> {
     pub user_id: i32,
     pub message_ids: T1,
 }
+#[derive(Debug)]
+pub struct CreateFriendRequestParams<T1: crate::StringSql> {
+    pub user_id: i32,
+    pub target_id: i32,
+    pub body: T1,
+}
 #[derive(Debug, Clone, PartialEq)]
 pub struct Message {
     pub id: i32,
@@ -674,5 +680,52 @@ impl<'a, C: GenericClient + Send + Sync, T1: crate::ArraySql<Item = i32>>
         Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
     > {
         Box::pin(self.bind(client, &params.user_id, &params.message_ids))
+    }
+}
+pub struct CreateFriendRequestStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn create_friend_request() -> CreateFriendRequestStmt {
+    CreateFriendRequestStmt(
+        "INSERT INTO friend_requests ( user_id, target_id, body ) VALUES ( $1, $2, $3 )",
+        None,
+    )
+}
+impl CreateFriendRequestStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub async fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+        &'s self,
+        client: &'c C,
+        user_id: &'a i32,
+        target_id: &'a i32,
+        body: &'a T1,
+    ) -> Result<u64, tokio_postgres::Error> {
+        client.execute(self.0, &[user_id, target_id, body]).await
+    }
+}
+impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql>
+    crate::client::async_::Params<
+        'a,
+        'a,
+        'a,
+        CreateFriendRequestParams<T1>,
+        std::pin::Pin<
+            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+        >,
+        C,
+    > for CreateFriendRequestStmt
+{
+    fn params(
+        &'a self,
+        client: &'a C,
+        params: &'a CreateFriendRequestParams<T1>,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+    > {
+        Box::pin(self.bind(client, &params.user_id, &params.target_id, &params.body))
     }
 }
