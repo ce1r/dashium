@@ -171,3 +171,8 @@ ORDER BY u.username ASC;
 DELETE FROM friend_requests
 WHERE user_id = :user_id
     AND target_id = ANY(:target_ids);
+
+--! remove_friend
+DELETE FROM friendships
+WHERE (user1, user2)
+IN ((:user_id, :target_id), (:target_id, :user_id));
