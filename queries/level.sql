@@ -1,9 +1,10 @@
+--: Level ()
+
 --! create_level
 INSERT INTO levels (
     name,
     description,
     user_id,
-    level_data,
 
     version,
     original_level_id,
@@ -27,7 +28,6 @@ SELECT
     :name,
     :description,
     users.id,
-    :level_data,
 
     :version,
     :original_level_id,
@@ -47,5 +47,14 @@ SELECT
 
     :visibility
 FROM users
-WHERE id = :user_id
+WHERE users.id = :user_id
 RETURNING id;
+
+--! search_levels : Level
+SELECT
+    levels.*,
+    users.username
+FROM levels
+JOIN users ON levels.user_id = users.id
+WHERE levels.name ILIKE '%' || :search || '%'
+LIMIT 10 OFFSET :offset;

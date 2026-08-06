@@ -10,6 +10,8 @@ use cornucopia::types::Visibility;
 use serde::Deserialize;
 use serde_with::BoolFromInt;
 use serde_with::serde_as;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 
 #[serde_as]
 #[derive(Deserialize)]
@@ -71,7 +73,6 @@ pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<String> {
             &client,
             &form.levelName,
             &description,
-            &form.levelString,
             &form.levelVersion,
             &form.original,
             &level_length,
@@ -80,8 +81,8 @@ pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<String> {
             &form.coins,
             &form.auto,
             &form.ldm,
-            &is_platformer,
             &form.twoPlayer,
+            &is_platformer,
             &form.audioTrack,
             &form.songID,
             &visibility,
@@ -89,6 +90,10 @@ pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<String> {
         )
         .one()
         .await?;
+
+    let path = format!("data/levels/{level_id}.level");
+    let mut file = File::create(path).await?;
+    file.write_all(form.levelString.as_bytes()).await?;
 
     Ok(level_id.to_string())
 }

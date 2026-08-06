@@ -172,6 +172,201 @@ impl<'a> postgres_types::FromSql<'a> for Visibility {
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+pub enum Difficulty {
+    NA,
+    Auto,
+    Easy,
+    Normal,
+    Hard,
+    Harder,
+    Insane,
+    Demon,
+}
+impl<'a> postgres_types::ToSql for Difficulty {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        buf: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        let s = match *self {
+            Difficulty::NA => "NA",
+            Difficulty::Auto => "Auto",
+            Difficulty::Easy => "Easy",
+            Difficulty::Normal => "Normal",
+            Difficulty::Hard => "Hard",
+            Difficulty::Harder => "Harder",
+            Difficulty::Insane => "Insane",
+            Difficulty::Demon => "Demon",
+        };
+        buf.extend_from_slice(s.as_bytes());
+        std::result::Result::Ok(postgres_types::IsNull::No)
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "difficulty" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 8 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "NA" => true,
+                    "Auto" => true,
+                    "Easy" => true,
+                    "Normal" => true,
+                    "Hard" => true,
+                    "Harder" => true,
+                    "Insane" => true,
+                    "Demon" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+    fn to_sql_checked(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        postgres_types::__to_sql_checked(self, ty, out)
+    }
+}
+impl<'a> postgres_types::FromSql<'a> for Difficulty {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        buf: &'a [u8],
+    ) -> Result<Difficulty, Box<dyn std::error::Error + Sync + Send>> {
+        match std::str::from_utf8(buf)? {
+            "NA" => Ok(Difficulty::NA),
+            "Auto" => Ok(Difficulty::Auto),
+            "Easy" => Ok(Difficulty::Easy),
+            "Normal" => Ok(Difficulty::Normal),
+            "Hard" => Ok(Difficulty::Hard),
+            "Harder" => Ok(Difficulty::Harder),
+            "Insane" => Ok(Difficulty::Insane),
+            "Demon" => Ok(Difficulty::Demon),
+            s => Result::Err(Into::into(format!("invalid variant `{}`", s))),
+        }
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "difficulty" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 8 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "NA" => true,
+                    "Auto" => true,
+                    "Easy" => true,
+                    "Normal" => true,
+                    "Hard" => true,
+                    "Harder" => true,
+                    "Insane" => true,
+                    "Demon" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
+pub enum DemonDifficulty {
+    Easy,
+    Medium,
+    Hard,
+    Insane,
+    Extreme,
+}
+impl<'a> postgres_types::ToSql for DemonDifficulty {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        buf: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        let s = match *self {
+            DemonDifficulty::Easy => "Easy",
+            DemonDifficulty::Medium => "Medium",
+            DemonDifficulty::Hard => "Hard",
+            DemonDifficulty::Insane => "Insane",
+            DemonDifficulty::Extreme => "Extreme",
+        };
+        buf.extend_from_slice(s.as_bytes());
+        std::result::Result::Ok(postgres_types::IsNull::No)
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "demon_difficulty" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 5 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "Easy" => true,
+                    "Medium" => true,
+                    "Hard" => true,
+                    "Insane" => true,
+                    "Extreme" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+    fn to_sql_checked(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        postgres_types::__to_sql_checked(self, ty, out)
+    }
+}
+impl<'a> postgres_types::FromSql<'a> for DemonDifficulty {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        buf: &'a [u8],
+    ) -> Result<DemonDifficulty, Box<dyn std::error::Error + Sync + Send>> {
+        match std::str::from_utf8(buf)? {
+            "Easy" => Ok(DemonDifficulty::Easy),
+            "Medium" => Ok(DemonDifficulty::Medium),
+            "Hard" => Ok(DemonDifficulty::Hard),
+            "Insane" => Ok(DemonDifficulty::Insane),
+            "Extreme" => Ok(DemonDifficulty::Extreme),
+            s => Result::Err(Into::into(format!("invalid variant `{}`", s))),
+        }
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "demon_difficulty" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 5 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "Easy" => true,
+                    "Medium" => true,
+                    "Hard" => true,
+                    "Insane" => true,
+                    "Extreme" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
 pub enum ItemType {
     Orbs,
     Coins,
