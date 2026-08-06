@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use dashium::Database;
 use dotenvy::dotenv;
 use tokio::net::TcpListener;

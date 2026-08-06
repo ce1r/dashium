@@ -35,6 +35,7 @@ CREATE TYPE visibility AS ENUM (
     'Private'
 );
 
+CREATE SEQUENCE IF NOT EXISTS feature_scores START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE levels (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -57,6 +58,16 @@ CREATE TABLE levels (
     difficulty difficulty NOT NULL DEFAULT 'NA',
     demon_difficulty demon_difficulty NOT NULL DEFAULT 'Hard',
 
+    is_rated BOOLEAN GENERATED ALWAYS AS (
+        stars > 0
+    ) STORED,
+
+    is_featured BOOLEAN GENERATED ALWAYS AS (
+        feature_score > 0
+    ) STORED,
+    
+    feature_score INTEGER NOT NULL DEFAULT 0, 
+
     is_auto BOOLEAN NOT NULL DEFAULT FALSE,
     is_ldm BOOLEAN NOT NULL DEFAULT FALSE,
     is_two_player BOOLEAN NOT NULL DEFAULT FALSE,
@@ -70,5 +81,6 @@ CREATE TABLE levels (
 
     visibility visibility NOT NULL,
 
+    featured_at TIMESTAMPTZ DEFAULT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

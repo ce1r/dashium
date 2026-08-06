@@ -91,9 +91,11 @@ pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<String> {
         .one()
         .await?;
 
+    let level_string = URL_SAFE.decode(form.levelString)?;
+
     let path = format!("data/levels/{level_id}.level");
     let mut file = File::create(path).await?;
-    file.write_all(form.levelString.as_bytes()).await?;
+    file.write_all(&level_string).await?;
 
     Ok(level_id.to_string())
 }

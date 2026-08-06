@@ -1,4 +1,4 @@
---: Level ()
+--: Level (featured_at?)
 
 --! create_level
 INSERT INTO levels (
@@ -58,3 +58,11 @@ FROM levels
 JOIN users ON levels.user_id = users.id
 WHERE levels.name ILIKE '%' || :search || '%'
 LIMIT 10 OFFSET :offset;
+
+--! get_level : Level
+SELECT
+    levels.*,
+    users.username
+FROM levels
+JOIN users ON levels.user_id = users.id
+WHERE levels.id = :level_id;
