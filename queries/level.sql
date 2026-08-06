@@ -16,6 +16,7 @@ INSERT INTO levels (
     is_auto,
     is_ldm,
     is_two_player,
+    is_platformer,
 
     official_song_id,
     song_id,
@@ -39,6 +40,7 @@ SELECT
     :is_auto,
     :is_ldm,
     :is_two_player,
+    :is_platformer,
 
     :official_song_id,
     :song_id,

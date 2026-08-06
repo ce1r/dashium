@@ -70,16 +70,6 @@ SET udid = :udid
 WHERE username = :username
 RETURNING id, hash, salt;
 
---! save_data
-UPDATE users
-SET save_data = :save_data
-WHERE id = :user_id;
-
---! load_data
-SELECT save_data
-FROM users
-WHERE id = :user_id;
-
 --! save_stats
 UPDATE users
 SET

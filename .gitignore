@@ -2,3 +2,5 @@
 .env
 .vscode/
 .zed/
+data/users/*.user
+data/levels/*.level

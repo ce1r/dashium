@@ -5,6 +5,8 @@ use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
 use cornucopia::queries::level::create_level;
+use cornucopia::types::LevelLength;
+use cornucopia::types::Visibility;
 use serde::Deserialize;
 use serde_with::BoolFromInt;
 use serde_with::serde_as;
@@ -21,7 +23,7 @@ pub struct Data {
     levelVersion: i32,
     original: i32,
 
-    levelLength: i16,
+    levelLength: u8,
     objects: i32,
     requestedStars: i16,
     coins: i16,
@@ -38,7 +40,7 @@ pub struct Data {
     audioTrack: i32,
     songID: i32,
 
-    unlisted: i16,
+    unlisted: u8,
 }
 
 pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<String> {
@@ -48,6 +50,22 @@ pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<String> {
     let description_bytes = URL_SAFE.decode(&form.levelDesc)?;
     let description = String::from_utf8(description_bytes)?;
 
+    let is_platformer = form.levelLength == 5;
+
+    let level_length = match form.levelLength {
+        1 => LevelLength::Short,
+        2 => LevelLength::Medium,
+        3 => LevelLength::Long,
+        4 => LevelLength::XL,
+        _ => LevelLength::Tiny,
+    };
+
+    let visibility = match form.unlisted {
+        1 => Visibility::FriendsOnly,
+        2 => Visibility::Private,
+        _ => Visibility::Public,
+    };
+
     let level_id = create_level()
         .bind(
             &client,
@@ -56,16 +74,17 @@ pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<String> {
             &form.levelString,
             &form.levelVersion,
             &form.original,
-            &form.levelLength,
+            &level_length,
             &form.objects,
             &form.requestedStars,
             &form.coins,
             &form.auto,
             &form.ldm,
+            &is_platformer,
             &form.twoPlayer,
             &form.audioTrack,
             &form.songID,
-            &form.unlisted,
+            &visibility,
             &form.accountID,
         )
         .one()

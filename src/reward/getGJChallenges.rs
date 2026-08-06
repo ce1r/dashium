@@ -31,9 +31,9 @@ pub async fn getGJChallenges(Form(form): Form<Data>) -> Result<String> {
         .iter()
         .map(|q| {
             let item_type = match q.item_type {
-                ItemType::orbs => 1,
-                ItemType::coins => 2,
-                ItemType::stars => 3,
+                ItemType::Orbs => 1,
+                ItemType::Coins => 2,
+                ItemType::Stars => 3,
             };
 
             format!(

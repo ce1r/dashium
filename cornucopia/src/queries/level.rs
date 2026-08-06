@@ -7,16 +7,17 @@ pub struct CreateLevelParams<T1: crate::StringSql, T2: crate::StringSql, T3: cra
     pub level_data: T3,
     pub version: i32,
     pub original_level_id: i32,
-    pub length: i16,
+    pub length: crate::types::LevelLength,
     pub objects: i32,
     pub requested_stars: i16,
     pub coins: i16,
     pub is_auto: bool,
     pub is_ldm: bool,
     pub is_two_player: bool,
+    pub is_platformer: bool,
     pub official_song_id: i32,
     pub song_id: i32,
-    pub visibility: i16,
+    pub visibility: crate::types::Visibility,
     pub user_id: i32,
 }
 use crate::client::async_::GenericClient;
@@ -88,7 +89,7 @@ where
 pub struct CreateLevelStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn create_level() -> CreateLevelStmt {
     CreateLevelStmt(
-        "INSERT INTO levels ( name, description, user_id, level_data, version, original_level_id, length, objects, requested_stars, coins, is_auto, is_ldm, is_two_player, official_song_id, song_id, visibility ) SELECT $1, $2, users.id, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15 FROM users WHERE id = $16 RETURNING id",
+        "INSERT INTO levels ( name, description, user_id, level_data, version, original_level_id, length, objects, requested_stars, coins, is_auto, is_ldm, is_two_player, is_platformer, official_song_id, song_id, visibility ) SELECT $1, $2, users.id, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16 FROM users WHERE id = $17 RETURNING id",
         None,
     )
 }
@@ -116,18 +117,19 @@ impl CreateLevelStmt {
         level_data: &'a T3,
         version: &'a i32,
         original_level_id: &'a i32,
-        length: &'a i16,
+        length: &'a crate::types::LevelLength,
         objects: &'a i32,
         requested_stars: &'a i16,
         coins: &'a i16,
         is_auto: &'a bool,
         is_ldm: &'a bool,
         is_two_player: &'a bool,
+        is_platformer: &'a bool,
         official_song_id: &'a i32,
         song_id: &'a i32,
-        visibility: &'a i16,
+        visibility: &'a crate::types::Visibility,
         user_id: &'a i32,
-    ) -> I32Query<'c, 'a, 's, C, i32, 16> {
+    ) -> I32Query<'c, 'a, 's, C, i32, 17> {
         I32Query {
             client,
             params: [
@@ -143,6 +145,7 @@ impl CreateLevelStmt {
                 is_auto,
                 is_ldm,
                 is_two_player,
+                is_platformer,
                 official_song_id,
                 song_id,
                 visibility,
@@ -161,7 +164,7 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql, T
         'a,
         's,
         CreateLevelParams<T1, T2, T3>,
-        I32Query<'c, 'a, 's, C, i32, 16>,
+        I32Query<'c, 'a, 's, C, i32, 17>,
         C,
     > for CreateLevelStmt
 {
@@ -169,7 +172,7 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql, T
         &'s self,
         client: &'c C,
         params: &'a CreateLevelParams<T1, T2, T3>,
-    ) -> I32Query<'c, 'a, 's, C, i32, 16> {
+    ) -> I32Query<'c, 'a, 's, C, i32, 17> {
         self.bind(
             client,
             &params.name,
@@ -184,6 +187,7 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql, T
             &params.is_auto,
             &params.is_ldm,
             &params.is_two_player,
+            &params.is_platformer,
             &params.official_song_id,
             &params.song_id,
             &params.visibility,

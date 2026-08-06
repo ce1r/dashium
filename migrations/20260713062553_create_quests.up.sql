@@ -1,5 +1,9 @@
 DROP TYPE IF EXISTS item_type;
-CREATE TYPE item_type AS ENUM ('orbs', 'coins', 'stars');
+CREATE TYPE item_type AS ENUM (
+    'Orbs',
+    'Coins',
+    'Stars'
+);
 
 CREATE TABLE quests (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -11,6 +15,6 @@ CREATE TABLE quests (
 );
 
 INSERT INTO quests (item_type, amount, reward, name)
-VALUES ('orbs', 2000, 30, 'Gather 2000 Orbs'),
-    ('coins', 5, 20, 'Earn 5 Coins'),
-    ('stars', 10, 10, 'Collect 10 Stars');
+VALUES ('Orbs', 2000, 30, 'Gather 2000 Orbs'),
+    ('Coins', 5, 20, 'Earn 5 Coins'),
+    ('Stars', 10, 10, 'Collect 10 Stars');

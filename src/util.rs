@@ -1,4 +1,3 @@
-use crate::error::AppError;
 use chrono::Local;
 use chrono::Timelike;
 use cornucopia::deadpool_postgres::Object;
@@ -8,7 +7,7 @@ use sha1::Sha1;
 use sha2::Sha256;
 use subtle::ConstantTimeEq;
 
-pub async fn verify_gjp2(client: &Object, user_id: i32, gjp2: &str) -> crate::Result<()> {
+pub async fn verify_gjp2(client: &Object, user_id: i32, gjp2: &str) -> anyhow::Result<Vec<u8>> {
     let auth = get_hash_and_salt().bind(client, &user_id).one().await?;
 
     let mut hasher = Sha256::new();
@@ -17,9 +16,9 @@ pub async fn verify_gjp2(client: &Object, user_id: i32, gjp2: &str) -> crate::Re
     let hash = hasher.finalize();
 
     if bool::from(hash.ct_eq(&auth.hash)) {
-        Ok(())
+        Ok(auth.hash)
     } else {
-        Err(AppError)
+        Err(anyhow::anyhow!(""))
     }
 }
 

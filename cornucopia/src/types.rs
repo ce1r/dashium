@@ -2,10 +2,180 @@
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
+pub enum LevelLength {
+    Tiny,
+    Short,
+    Medium,
+    Long,
+    XL,
+}
+impl<'a> postgres_types::ToSql for LevelLength {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        buf: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        let s = match *self {
+            LevelLength::Tiny => "Tiny",
+            LevelLength::Short => "Short",
+            LevelLength::Medium => "Medium",
+            LevelLength::Long => "Long",
+            LevelLength::XL => "XL",
+        };
+        buf.extend_from_slice(s.as_bytes());
+        std::result::Result::Ok(postgres_types::IsNull::No)
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "level_length" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 5 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "Tiny" => true,
+                    "Short" => true,
+                    "Medium" => true,
+                    "Long" => true,
+                    "XL" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+    fn to_sql_checked(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        postgres_types::__to_sql_checked(self, ty, out)
+    }
+}
+impl<'a> postgres_types::FromSql<'a> for LevelLength {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        buf: &'a [u8],
+    ) -> Result<LevelLength, Box<dyn std::error::Error + Sync + Send>> {
+        match std::str::from_utf8(buf)? {
+            "Tiny" => Ok(LevelLength::Tiny),
+            "Short" => Ok(LevelLength::Short),
+            "Medium" => Ok(LevelLength::Medium),
+            "Long" => Ok(LevelLength::Long),
+            "XL" => Ok(LevelLength::XL),
+            s => Result::Err(Into::into(format!("invalid variant `{}`", s))),
+        }
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "level_length" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 5 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "Tiny" => true,
+                    "Short" => true,
+                    "Medium" => true,
+                    "Long" => true,
+                    "XL" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
+pub enum Visibility {
+    Public,
+    FriendsOnly,
+    Private,
+}
+impl<'a> postgres_types::ToSql for Visibility {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        buf: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        let s = match *self {
+            Visibility::Public => "Public",
+            Visibility::FriendsOnly => "FriendsOnly",
+            Visibility::Private => "Private",
+        };
+        buf.extend_from_slice(s.as_bytes());
+        std::result::Result::Ok(postgres_types::IsNull::No)
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "visibility" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 3 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "Public" => true,
+                    "FriendsOnly" => true,
+                    "Private" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+    fn to_sql_checked(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        postgres_types::__to_sql_checked(self, ty, out)
+    }
+}
+impl<'a> postgres_types::FromSql<'a> for Visibility {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        buf: &'a [u8],
+    ) -> Result<Visibility, Box<dyn std::error::Error + Sync + Send>> {
+        match std::str::from_utf8(buf)? {
+            "Public" => Ok(Visibility::Public),
+            "FriendsOnly" => Ok(Visibility::FriendsOnly),
+            "Private" => Ok(Visibility::Private),
+            s => Result::Err(Into::into(format!("invalid variant `{}`", s))),
+        }
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "visibility" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 3 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "Public" => true,
+                    "FriendsOnly" => true,
+                    "Private" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(non_camel_case_types)]
 pub enum ItemType {
-    orbs,
-    coins,
-    stars,
+    Orbs,
+    Coins,
+    Stars,
 }
 impl<'a> postgres_types::ToSql for ItemType {
     fn to_sql(
@@ -14,9 +184,9 @@ impl<'a> postgres_types::ToSql for ItemType {
         buf: &mut postgres_types::private::BytesMut,
     ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
         let s = match *self {
-            ItemType::orbs => "orbs",
-            ItemType::coins => "coins",
-            ItemType::stars => "stars",
+            ItemType::Orbs => "Orbs",
+            ItemType::Coins => "Coins",
+            ItemType::Stars => "Stars",
         };
         buf.extend_from_slice(s.as_bytes());
         std::result::Result::Ok(postgres_types::IsNull::No)
@@ -31,9 +201,9 @@ impl<'a> postgres_types::ToSql for ItemType {
                     return false;
                 }
                 variants.iter().all(|v| match &**v {
-                    "orbs" => true,
-                    "coins" => true,
-                    "stars" => true,
+                    "Orbs" => true,
+                    "Coins" => true,
+                    "Stars" => true,
                     _ => false,
                 })
             }
@@ -54,9 +224,9 @@ impl<'a> postgres_types::FromSql<'a> for ItemType {
         buf: &'a [u8],
     ) -> Result<ItemType, Box<dyn std::error::Error + Sync + Send>> {
         match std::str::from_utf8(buf)? {
-            "orbs" => Ok(ItemType::orbs),
-            "coins" => Ok(ItemType::coins),
-            "stars" => Ok(ItemType::stars),
+            "Orbs" => Ok(ItemType::Orbs),
+            "Coins" => Ok(ItemType::Coins),
+            "Stars" => Ok(ItemType::Stars),
             s => Result::Err(Into::into(format!("invalid variant `{}`", s))),
         }
     }
@@ -70,9 +240,9 @@ impl<'a> postgres_types::FromSql<'a> for ItemType {
                     return false;
                 }
                 variants.iter().all(|v| match &**v {
-                    "orbs" => true,
-                    "coins" => true,
-                    "stars" => true,
+                    "Orbs" => true,
+                    "Coins" => true,
+                    "Stars" => true,
                     _ => false,
                 })
             }
