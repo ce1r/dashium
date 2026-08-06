@@ -3,6 +3,8 @@ use crate::Result;
 use crate::util::verify_gjp2;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::update_settings;
+use cornucopia::types::CommentSetting;
+use cornucopia::types::MessageSetting;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -24,12 +26,25 @@ pub async fn updateGJAccSettings20(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
     verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
+    let accept_friend_requests = form.frS == 0;
+    let message_setting = match form.mS {
+        1 => MessageSetting::FriendsOnly,
+        2 => MessageSetting::None,
+        _ => MessageSetting::All,
+    };
+
+    let comment_setting = match form.cS {
+        1 => CommentSetting::FriendsOnly,
+        2 => CommentSetting::None,
+        _ => CommentSetting::All,
+    };
+
     update_settings()
         .bind(
             &client,
-            &form.mS,
-            &form.frS,
-            &form.cS,
+            &accept_friend_requests,
+            &message_setting,
+            &comment_setting,
             &form.yt,
             &form.twitter,
             &form.twitch,

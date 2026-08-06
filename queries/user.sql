@@ -1,3 +1,5 @@
+--: User() : serde::Serialize
+
 --! get_hash_and_salt
 SELECT
     hash,
@@ -17,52 +19,6 @@ INSERT INTO users (
     :hash,
     :salt
 );
-
---! get_user
-SELECT
-    id,
-    username,
-    is_activated,
-    mod_level,
-
-    stars,
-    demons,
-    creator_points,
-    diamonds,
-    moons,
-    secret_coins,
-    user_coins,
-
-    cube,
-    ship,
-    ball,
-    ufo,
-    wave,
-    robot,
-    spider,
-    swing,
-    jetpack,
-    glow,
-    explosion,
-    icon,
-    icon_type,
-
-    color1,
-    color2,
-    color3,
-
-    message_setting,
-    friend_setting,
-    comment_setting,
-
-    youtube,
-    twitter,
-    twitch,
-    discord,
-    instagram,
-    tiktok
-FROM users
-WHERE id = :id;
 
 --! login_user
 UPDATE users
@@ -108,8 +64,8 @@ WHERE id = :user_id;
 --! update_settings
 UPDATE users
 SET
+    accept_friend_requests = :accept_friend_requests,
     message_setting = :message_setting,
-    friend_setting = :friend_setting,
     comment_setting = :comment_setting,
     youtube = :youtube,
     twitter = :twitter,
@@ -119,32 +75,24 @@ SET
     tiktok = :tiktok
 WHERE id = :user_id;
 
---! search_users
-SELECT
-    id,
-    username,
-
-    stars,
-    demons,
-    creator_points,
-    diamonds,
-    moons,
-    secret_coins,
-    user_coins,
-
-    glow,
-    icon,
-    icon_type,
-
-    color1,
-    color2,
-    color3
-FROM users
-WHERE username ILIKE '%' || :search || '%'
-    AND id != :user_id
-LIMIT 10 OFFSET :offset;
-
 --! get_udid
 SELECT udid
 FROM users
 WHERE id = :user_id;
+
+--! get_user_by_username : User
+SELECT *
+FROM user_view
+WHERE username = :username;
+
+--! get_user_by_id : User
+SELECT *
+FROM user_view
+WHERE id = :id;
+
+--! search_users : User
+SELECT *
+FROM user_view
+WHERE username ILIKE '%' || :search || '%'
+    AND id != :user_id
+LIMIT 10 OFFSET :offset;

@@ -52,9 +52,9 @@ pub struct UpdateSettingsParams<
     T5: crate::StringSql,
     T6: crate::StringSql,
 > {
-    pub message_setting: i16,
-    pub friend_setting: i16,
-    pub comment_setting: i16,
+    pub accept_friend_requests: bool,
+    pub message_setting: crate::types::MessageSetting,
+    pub comment_setting: crate::types::CommentSetting,
     pub youtube: T1,
     pub twitter: T2,
     pub twitch: T3,
@@ -87,164 +87,6 @@ impl<'a> From<GetHashAndSaltBorrowed<'a>> for GetHashAndSalt {
     }
 }
 #[derive(Debug, Clone, PartialEq)]
-pub struct GetUser {
-    pub id: i32,
-    pub username: String,
-    pub is_activated: bool,
-    pub mod_level: i16,
-    pub stars: i32,
-    pub demons: i32,
-    pub creator_points: i32,
-    pub diamonds: i32,
-    pub moons: i32,
-    pub secret_coins: i32,
-    pub user_coins: i32,
-    pub cube: i16,
-    pub ship: i16,
-    pub ball: i16,
-    pub ufo: i16,
-    pub wave: i16,
-    pub robot: i16,
-    pub spider: i16,
-    pub swing: i16,
-    pub jetpack: i16,
-    pub glow: i16,
-    pub explosion: i16,
-    pub icon: i16,
-    pub icon_type: i16,
-    pub color1: i16,
-    pub color2: i16,
-    pub color3: i16,
-    pub message_setting: i16,
-    pub friend_setting: i16,
-    pub comment_setting: i16,
-    pub youtube: String,
-    pub twitter: String,
-    pub twitch: String,
-    pub discord: String,
-    pub instagram: String,
-    pub tiktok: String,
-}
-pub struct GetUserBorrowed<'a> {
-    pub id: i32,
-    pub username: &'a str,
-    pub is_activated: bool,
-    pub mod_level: i16,
-    pub stars: i32,
-    pub demons: i32,
-    pub creator_points: i32,
-    pub diamonds: i32,
-    pub moons: i32,
-    pub secret_coins: i32,
-    pub user_coins: i32,
-    pub cube: i16,
-    pub ship: i16,
-    pub ball: i16,
-    pub ufo: i16,
-    pub wave: i16,
-    pub robot: i16,
-    pub spider: i16,
-    pub swing: i16,
-    pub jetpack: i16,
-    pub glow: i16,
-    pub explosion: i16,
-    pub icon: i16,
-    pub icon_type: i16,
-    pub color1: i16,
-    pub color2: i16,
-    pub color3: i16,
-    pub message_setting: i16,
-    pub friend_setting: i16,
-    pub comment_setting: i16,
-    pub youtube: &'a str,
-    pub twitter: &'a str,
-    pub twitch: &'a str,
-    pub discord: &'a str,
-    pub instagram: &'a str,
-    pub tiktok: &'a str,
-}
-impl<'a> From<GetUserBorrowed<'a>> for GetUser {
-    fn from(
-        GetUserBorrowed {
-            id,
-            username,
-            is_activated,
-            mod_level,
-            stars,
-            demons,
-            creator_points,
-            diamonds,
-            moons,
-            secret_coins,
-            user_coins,
-            cube,
-            ship,
-            ball,
-            ufo,
-            wave,
-            robot,
-            spider,
-            swing,
-            jetpack,
-            glow,
-            explosion,
-            icon,
-            icon_type,
-            color1,
-            color2,
-            color3,
-            message_setting,
-            friend_setting,
-            comment_setting,
-            youtube,
-            twitter,
-            twitch,
-            discord,
-            instagram,
-            tiktok,
-        }: GetUserBorrowed<'a>,
-    ) -> Self {
-        Self {
-            id,
-            username: username.into(),
-            is_activated,
-            mod_level,
-            stars,
-            demons,
-            creator_points,
-            diamonds,
-            moons,
-            secret_coins,
-            user_coins,
-            cube,
-            ship,
-            ball,
-            ufo,
-            wave,
-            robot,
-            spider,
-            swing,
-            jetpack,
-            glow,
-            explosion,
-            icon,
-            icon_type,
-            color1,
-            color2,
-            color3,
-            message_setting,
-            friend_setting,
-            comment_setting,
-            youtube: youtube.into(),
-            twitter: twitter.into(),
-            twitch: twitch.into(),
-            discord: discord.into(),
-            instagram: instagram.into(),
-            tiktok: tiktok.into(),
-        }
-    }
-}
-#[derive(Debug, Clone, PartialEq)]
 pub struct LoginUser {
     pub id: i32,
     pub hash: Vec<u8>,
@@ -264,10 +106,11 @@ impl<'a> From<LoginUserBorrowed<'a>> for LoginUser {
         }
     }
 }
-#[derive(Debug, Clone, PartialEq)]
-pub struct SearchUsers {
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct User {
     pub id: i32,
     pub username: String,
+    pub mod_level: crate::types::ModLevel,
     pub stars: i32,
     pub demons: i32,
     pub creator_points: i32,
@@ -275,16 +118,37 @@ pub struct SearchUsers {
     pub moons: i32,
     pub secret_coins: i32,
     pub user_coins: i32,
+    pub cube: i16,
+    pub ship: i16,
+    pub ball: i16,
+    pub ufo: i16,
+    pub wave: i16,
+    pub robot: i16,
+    pub spider: i16,
+    pub swing: i16,
+    pub jetpack: i16,
     pub glow: i16,
+    pub explosion: i16,
     pub icon: i16,
     pub icon_type: i16,
     pub color1: i16,
     pub color2: i16,
     pub color3: i16,
+    pub accept_friend_requests: bool,
+    pub message_setting: crate::types::MessageSetting,
+    pub comment_setting: crate::types::CommentSetting,
+    pub youtube: String,
+    pub twitter: String,
+    pub twitch: String,
+    pub discord: String,
+    pub instagram: String,
+    pub tiktok: String,
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }
-pub struct SearchUsersBorrowed<'a> {
+pub struct UserBorrowed<'a> {
     pub id: i32,
     pub username: &'a str,
+    pub mod_level: crate::types::ModLevel,
     pub stars: i32,
     pub demons: i32,
     pub creator_points: i32,
@@ -292,18 +156,39 @@ pub struct SearchUsersBorrowed<'a> {
     pub moons: i32,
     pub secret_coins: i32,
     pub user_coins: i32,
+    pub cube: i16,
+    pub ship: i16,
+    pub ball: i16,
+    pub ufo: i16,
+    pub wave: i16,
+    pub robot: i16,
+    pub spider: i16,
+    pub swing: i16,
+    pub jetpack: i16,
     pub glow: i16,
+    pub explosion: i16,
     pub icon: i16,
     pub icon_type: i16,
     pub color1: i16,
     pub color2: i16,
     pub color3: i16,
+    pub accept_friend_requests: bool,
+    pub message_setting: crate::types::MessageSetting,
+    pub comment_setting: crate::types::CommentSetting,
+    pub youtube: &'a str,
+    pub twitter: &'a str,
+    pub twitch: &'a str,
+    pub discord: &'a str,
+    pub instagram: &'a str,
+    pub tiktok: &'a str,
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }
-impl<'a> From<SearchUsersBorrowed<'a>> for SearchUsers {
+impl<'a> From<UserBorrowed<'a>> for User {
     fn from(
-        SearchUsersBorrowed {
+        UserBorrowed {
             id,
             username,
+            mod_level,
             stars,
             demons,
             creator_points,
@@ -311,17 +196,38 @@ impl<'a> From<SearchUsersBorrowed<'a>> for SearchUsers {
             moons,
             secret_coins,
             user_coins,
+            cube,
+            ship,
+            ball,
+            ufo,
+            wave,
+            robot,
+            spider,
+            swing,
+            jetpack,
             glow,
+            explosion,
             icon,
             icon_type,
             color1,
             color2,
             color3,
-        }: SearchUsersBorrowed<'a>,
+            accept_friend_requests,
+            message_setting,
+            comment_setting,
+            youtube,
+            twitter,
+            twitch,
+            discord,
+            instagram,
+            tiktok,
+            created_at,
+        }: UserBorrowed<'a>,
     ) -> Self {
         Self {
             id,
             username: username.into(),
+            mod_level,
             stars,
             demons,
             creator_points,
@@ -329,12 +235,32 @@ impl<'a> From<SearchUsersBorrowed<'a>> for SearchUsers {
             moons,
             secret_coins,
             user_coins,
+            cube,
+            ship,
+            ball,
+            ufo,
+            wave,
+            robot,
+            spider,
+            swing,
+            jetpack,
             glow,
+            explosion,
             icon,
             icon_type,
             color1,
             color2,
             color3,
+            accept_friend_requests,
+            message_setting,
+            comment_setting,
+            youtube: youtube.into(),
+            twitter: twitter.into(),
+            twitch: twitch.into(),
+            discord: discord.into(),
+            instagram: instagram.into(),
+            tiktok: tiktok.into(),
+            created_at,
         }
     }
 }
@@ -357,70 +283,6 @@ where
         mapper: fn(GetHashAndSaltBorrowed) -> R,
     ) -> GetHashAndSaltQuery<'c, 'a, 's, C, R, N> {
         GetHashAndSaltQuery {
-            client: self.client,
-            params: self.params,
-            query: self.query,
-            cached: self.cached,
-            extractor: self.extractor,
-            mapper,
-        }
-    }
-    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
-        let row =
-            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
-        Ok((self.mapper)((self.extractor)(&row)?))
-    }
-    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
-        self.iter().await?.try_collect().await
-    }
-    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
-        let opt_row =
-            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
-        Ok(opt_row
-            .map(|row| {
-                let extracted = (self.extractor)(&row)?;
-                Ok((self.mapper)(extracted))
-            })
-            .transpose()?)
-    }
-    pub async fn iter(
-        self,
-    ) -> Result<
-        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
-        tokio_postgres::Error,
-    > {
-        let stream = crate::client::async_::raw(
-            self.client,
-            self.query,
-            crate::slice_iter(&self.params),
-            self.cached,
-        )
-        .await?;
-        let mapped = stream
-            .map(move |res| {
-                res.and_then(|row| {
-                    let extracted = (self.extractor)(&row)?;
-                    Ok((self.mapper)(extracted))
-                })
-            })
-            .into_stream();
-        Ok(mapped)
-    }
-}
-pub struct GetUserQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
-    client: &'c C,
-    params: [&'a (dyn postgres_types::ToSql + Sync); N],
-    query: &'static str,
-    cached: Option<&'s tokio_postgres::Statement>,
-    extractor: fn(&tokio_postgres::Row) -> Result<GetUserBorrowed, tokio_postgres::Error>,
-    mapper: fn(GetUserBorrowed) -> T,
-}
-impl<'c, 'a, 's, C, T: 'c, const N: usize> GetUserQuery<'c, 'a, 's, C, T, N>
-where
-    C: GenericClient,
-{
-    pub fn map<R>(self, mapper: fn(GetUserBorrowed) -> R) -> GetUserQuery<'c, 'a, 's, C, R, N> {
-        GetUserQuery {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -599,87 +461,23 @@ where
         Ok(mapped)
     }
 }
-pub struct I16Query<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+pub struct ModLevelQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
     client: &'c C,
     params: [&'a (dyn postgres_types::ToSql + Sync); N],
     query: &'static str,
     cached: Option<&'s tokio_postgres::Statement>,
-    extractor: fn(&tokio_postgres::Row) -> Result<i16, tokio_postgres::Error>,
-    mapper: fn(i16) -> T,
+    extractor: fn(&tokio_postgres::Row) -> Result<crate::types::ModLevel, tokio_postgres::Error>,
+    mapper: fn(crate::types::ModLevel) -> T,
 }
-impl<'c, 'a, 's, C, T: 'c, const N: usize> I16Query<'c, 'a, 's, C, T, N>
-where
-    C: GenericClient,
-{
-    pub fn map<R>(self, mapper: fn(i16) -> R) -> I16Query<'c, 'a, 's, C, R, N> {
-        I16Query {
-            client: self.client,
-            params: self.params,
-            query: self.query,
-            cached: self.cached,
-            extractor: self.extractor,
-            mapper,
-        }
-    }
-    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
-        let row =
-            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
-        Ok((self.mapper)((self.extractor)(&row)?))
-    }
-    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
-        self.iter().await?.try_collect().await
-    }
-    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
-        let opt_row =
-            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
-        Ok(opt_row
-            .map(|row| {
-                let extracted = (self.extractor)(&row)?;
-                Ok((self.mapper)(extracted))
-            })
-            .transpose()?)
-    }
-    pub async fn iter(
-        self,
-    ) -> Result<
-        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
-        tokio_postgres::Error,
-    > {
-        let stream = crate::client::async_::raw(
-            self.client,
-            self.query,
-            crate::slice_iter(&self.params),
-            self.cached,
-        )
-        .await?;
-        let mapped = stream
-            .map(move |res| {
-                res.and_then(|row| {
-                    let extracted = (self.extractor)(&row)?;
-                    Ok((self.mapper)(extracted))
-                })
-            })
-            .into_stream();
-        Ok(mapped)
-    }
-}
-pub struct SearchUsersQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
-    client: &'c C,
-    params: [&'a (dyn postgres_types::ToSql + Sync); N],
-    query: &'static str,
-    cached: Option<&'s tokio_postgres::Statement>,
-    extractor: fn(&tokio_postgres::Row) -> Result<SearchUsersBorrowed, tokio_postgres::Error>,
-    mapper: fn(SearchUsersBorrowed) -> T,
-}
-impl<'c, 'a, 's, C, T: 'c, const N: usize> SearchUsersQuery<'c, 'a, 's, C, T, N>
+impl<'c, 'a, 's, C, T: 'c, const N: usize> ModLevelQuery<'c, 'a, 's, C, T, N>
 where
     C: GenericClient,
 {
     pub fn map<R>(
         self,
-        mapper: fn(SearchUsersBorrowed) -> R,
-    ) -> SearchUsersQuery<'c, 'a, 's, C, R, N> {
-        SearchUsersQuery {
+        mapper: fn(crate::types::ModLevel) -> R,
+    ) -> ModLevelQuery<'c, 'a, 's, C, R, N> {
+        ModLevelQuery {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -744,6 +542,70 @@ where
 {
     pub fn map<R>(self, mapper: fn(&str) -> R) -> StringQuery<'c, 'a, 's, C, R, N> {
         StringQuery {
+            client: self.client,
+            params: self.params,
+            query: self.query,
+            cached: self.cached,
+            extractor: self.extractor,
+            mapper,
+        }
+    }
+    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
+        let row =
+            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
+        Ok((self.mapper)((self.extractor)(&row)?))
+    }
+    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
+        self.iter().await?.try_collect().await
+    }
+    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
+        let opt_row =
+            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
+        Ok(opt_row
+            .map(|row| {
+                let extracted = (self.extractor)(&row)?;
+                Ok((self.mapper)(extracted))
+            })
+            .transpose()?)
+    }
+    pub async fn iter(
+        self,
+    ) -> Result<
+        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
+        tokio_postgres::Error,
+    > {
+        let stream = crate::client::async_::raw(
+            self.client,
+            self.query,
+            crate::slice_iter(&self.params),
+            self.cached,
+        )
+        .await?;
+        let mapped = stream
+            .map(move |res| {
+                res.and_then(|row| {
+                    let extracted = (self.extractor)(&row)?;
+                    Ok((self.mapper)(extracted))
+                })
+            })
+            .into_stream();
+        Ok(mapped)
+    }
+}
+pub struct UserQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+    client: &'c C,
+    params: [&'a (dyn postgres_types::ToSql + Sync); N],
+    query: &'static str,
+    cached: Option<&'s tokio_postgres::Statement>,
+    extractor: fn(&tokio_postgres::Row) -> Result<UserBorrowed, tokio_postgres::Error>,
+    mapper: fn(UserBorrowed) -> T,
+}
+impl<'c, 'a, 's, C, T: 'c, const N: usize> UserQuery<'c, 'a, 's, C, T, N>
+where
+    C: GenericClient,
+{
+    pub fn map<R>(self, mapper: fn(UserBorrowed) -> R) -> UserQuery<'c, 'a, 's, C, R, N> {
+        UserQuery {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -896,76 +758,6 @@ impl<
             &params.hash,
             &params.salt,
         ))
-    }
-}
-pub struct GetUserStmt(&'static str, Option<tokio_postgres::Statement>);
-pub fn get_user() -> GetUserStmt {
-    GetUserStmt(
-        "SELECT id, username, is_activated, mod_level, stars, demons, creator_points, diamonds, moons, secret_coins, user_coins, cube, ship, ball, ufo, wave, robot, spider, swing, jetpack, glow, explosion, icon, icon_type, color1, color2, color3, message_setting, friend_setting, comment_setting, youtube, twitter, twitch, discord, instagram, tiktok FROM users WHERE id = $1",
-        None,
-    )
-}
-impl GetUserStmt {
-    pub async fn prepare<'a, C: GenericClient>(
-        mut self,
-        client: &'a C,
-    ) -> Result<Self, tokio_postgres::Error> {
-        self.1 = Some(client.prepare(self.0).await?);
-        Ok(self)
-    }
-    pub fn bind<'c, 'a, 's, C: GenericClient>(
-        &'s self,
-        client: &'c C,
-        id: &'a i32,
-    ) -> GetUserQuery<'c, 'a, 's, C, GetUser, 1> {
-        GetUserQuery {
-            client,
-            params: [id],
-            query: self.0,
-            cached: self.1.as_ref(),
-            extractor:
-                |row: &tokio_postgres::Row| -> Result<GetUserBorrowed, tokio_postgres::Error> {
-                    Ok(GetUserBorrowed {
-                        id: row.try_get(0)?,
-                        username: row.try_get(1)?,
-                        is_activated: row.try_get(2)?,
-                        mod_level: row.try_get(3)?,
-                        stars: row.try_get(4)?,
-                        demons: row.try_get(5)?,
-                        creator_points: row.try_get(6)?,
-                        diamonds: row.try_get(7)?,
-                        moons: row.try_get(8)?,
-                        secret_coins: row.try_get(9)?,
-                        user_coins: row.try_get(10)?,
-                        cube: row.try_get(11)?,
-                        ship: row.try_get(12)?,
-                        ball: row.try_get(13)?,
-                        ufo: row.try_get(14)?,
-                        wave: row.try_get(15)?,
-                        robot: row.try_get(16)?,
-                        spider: row.try_get(17)?,
-                        swing: row.try_get(18)?,
-                        jetpack: row.try_get(19)?,
-                        glow: row.try_get(20)?,
-                        explosion: row.try_get(21)?,
-                        icon: row.try_get(22)?,
-                        icon_type: row.try_get(23)?,
-                        color1: row.try_get(24)?,
-                        color2: row.try_get(25)?,
-                        color3: row.try_get(26)?,
-                        message_setting: row.try_get(27)?,
-                        friend_setting: row.try_get(28)?,
-                        comment_setting: row.try_get(29)?,
-                        youtube: row.try_get(30)?,
-                        twitter: row.try_get(31)?,
-                        twitch: row.try_get(32)?,
-                        discord: row.try_get(33)?,
-                        instagram: row.try_get(34)?,
-                        tiktok: row.try_get(35)?,
-                    })
-                },
-            mapper: |it| GetUser::from(it),
-        }
     }
 }
 pub struct LoginUserStmt(&'static str, Option<tokio_postgres::Statement>);
@@ -1153,8 +945,8 @@ impl GetModLevelStmt {
         &'s self,
         client: &'c C,
         user_id: &'a i32,
-    ) -> I16Query<'c, 'a, 's, C, i16, 1> {
-        I16Query {
+    ) -> ModLevelQuery<'c, 'a, 's, C, crate::types::ModLevel, 1> {
+        ModLevelQuery {
             client,
             params: [user_id],
             query: self.0,
@@ -1167,7 +959,7 @@ impl GetModLevelStmt {
 pub struct UpdateSettingsStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn update_settings() -> UpdateSettingsStmt {
     UpdateSettingsStmt(
-        "UPDATE users SET message_setting = $1, friend_setting = $2, comment_setting = $3, youtube = $4, twitter = $5, twitch = $6, discord = $7, instagram = $8, tiktok = $9 WHERE id = $10",
+        "UPDATE users SET accept_friend_requests = $1, message_setting = $2, comment_setting = $3, youtube = $4, twitter = $5, twitch = $6, discord = $7, instagram = $8, tiktok = $9 WHERE id = $10",
         None,
     )
 }
@@ -1193,9 +985,9 @@ impl UpdateSettingsStmt {
     >(
         &'s self,
         client: &'c C,
-        message_setting: &'a i16,
-        friend_setting: &'a i16,
-        comment_setting: &'a i16,
+        accept_friend_requests: &'a bool,
+        message_setting: &'a crate::types::MessageSetting,
+        comment_setting: &'a crate::types::CommentSetting,
         youtube: &'a T1,
         twitter: &'a T2,
         twitch: &'a T3,
@@ -1208,8 +1000,8 @@ impl UpdateSettingsStmt {
             .execute(
                 self.0,
                 &[
+                    accept_friend_requests,
                     message_setting,
-                    friend_setting,
                     comment_setting,
                     youtube,
                     twitter,
@@ -1253,8 +1045,8 @@ impl<
     > {
         Box::pin(self.bind(
             client,
+            &params.accept_friend_requests,
             &params.message_setting,
-            &params.friend_setting,
             &params.comment_setting,
             &params.youtube,
             &params.twitter,
@@ -1264,75 +1056,6 @@ impl<
             &params.tiktok,
             &params.user_id,
         ))
-    }
-}
-pub struct SearchUsersStmt(&'static str, Option<tokio_postgres::Statement>);
-pub fn search_users() -> SearchUsersStmt {
-    SearchUsersStmt(
-        "SELECT id, username, stars, demons, creator_points, diamonds, moons, secret_coins, user_coins, glow, icon, icon_type, color1, color2, color3 FROM users WHERE username ILIKE '%' || $1 || '%' AND id != $2 LIMIT 10 OFFSET $3",
-        None,
-    )
-}
-impl SearchUsersStmt {
-    pub async fn prepare<'a, C: GenericClient>(
-        mut self,
-        client: &'a C,
-    ) -> Result<Self, tokio_postgres::Error> {
-        self.1 = Some(client.prepare(self.0).await?);
-        Ok(self)
-    }
-    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
-        &'s self,
-        client: &'c C,
-        search: &'a T1,
-        user_id: &'a i32,
-        offset: &'a i64,
-    ) -> SearchUsersQuery<'c, 'a, 's, C, SearchUsers, 3> {
-        SearchUsersQuery {
-            client,
-            params: [search, user_id, offset],
-            query: self.0,
-            cached: self.1.as_ref(),
-            extractor:
-                |row: &tokio_postgres::Row| -> Result<SearchUsersBorrowed, tokio_postgres::Error> {
-                    Ok(SearchUsersBorrowed {
-                        id: row.try_get(0)?,
-                        username: row.try_get(1)?,
-                        stars: row.try_get(2)?,
-                        demons: row.try_get(3)?,
-                        creator_points: row.try_get(4)?,
-                        diamonds: row.try_get(5)?,
-                        moons: row.try_get(6)?,
-                        secret_coins: row.try_get(7)?,
-                        user_coins: row.try_get(8)?,
-                        glow: row.try_get(9)?,
-                        icon: row.try_get(10)?,
-                        icon_type: row.try_get(11)?,
-                        color1: row.try_get(12)?,
-                        color2: row.try_get(13)?,
-                        color3: row.try_get(14)?,
-                    })
-                },
-            mapper: |it| SearchUsers::from(it),
-        }
-    }
-}
-impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
-    crate::client::async_::Params<
-        'c,
-        'a,
-        's,
-        SearchUsersParams<T1>,
-        SearchUsersQuery<'c, 'a, 's, C, SearchUsers, 3>,
-        C,
-    > for SearchUsersStmt
-{
-    fn params(
-        &'s self,
-        client: &'c C,
-        params: &'a SearchUsersParams<T1>,
-    ) -> SearchUsersQuery<'c, 'a, 's, C, SearchUsers, 3> {
-        self.bind(client, &params.search, &params.user_id, &params.offset)
     }
 }
 pub struct GetUdidStmt(&'static str, Option<tokio_postgres::Statement>);
@@ -1360,5 +1083,226 @@ impl GetUdidStmt {
             extractor: |row| Ok(row.try_get(0)?),
             mapper: |it| it.into(),
         }
+    }
+}
+pub struct GetUserByUsernameStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_user_by_username() -> GetUserByUsernameStmt {
+    GetUserByUsernameStmt("SELECT * FROM user_view WHERE username = $1", None)
+}
+impl GetUserByUsernameStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+        &'s self,
+        client: &'c C,
+        username: &'a T1,
+    ) -> UserQuery<'c, 'a, 's, C, User, 1> {
+        UserQuery {
+            client,
+            params: [username],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |row: &tokio_postgres::Row| -> Result<UserBorrowed, tokio_postgres::Error> {
+                Ok(UserBorrowed {
+                    id: row.try_get(0)?,
+                    username: row.try_get(1)?,
+                    mod_level: row.try_get(2)?,
+                    stars: row.try_get(3)?,
+                    demons: row.try_get(4)?,
+                    creator_points: row.try_get(5)?,
+                    diamonds: row.try_get(6)?,
+                    moons: row.try_get(7)?,
+                    secret_coins: row.try_get(8)?,
+                    user_coins: row.try_get(9)?,
+                    cube: row.try_get(10)?,
+                    ship: row.try_get(11)?,
+                    ball: row.try_get(12)?,
+                    ufo: row.try_get(13)?,
+                    wave: row.try_get(14)?,
+                    robot: row.try_get(15)?,
+                    spider: row.try_get(16)?,
+                    swing: row.try_get(17)?,
+                    jetpack: row.try_get(18)?,
+                    glow: row.try_get(19)?,
+                    explosion: row.try_get(20)?,
+                    icon: row.try_get(21)?,
+                    icon_type: row.try_get(22)?,
+                    color1: row.try_get(23)?,
+                    color2: row.try_get(24)?,
+                    color3: row.try_get(25)?,
+                    accept_friend_requests: row.try_get(26)?,
+                    message_setting: row.try_get(27)?,
+                    comment_setting: row.try_get(28)?,
+                    youtube: row.try_get(29)?,
+                    twitter: row.try_get(30)?,
+                    twitch: row.try_get(31)?,
+                    discord: row.try_get(32)?,
+                    instagram: row.try_get(33)?,
+                    tiktok: row.try_get(34)?,
+                    created_at: row.try_get(35)?,
+                })
+            },
+            mapper: |it| User::from(it),
+        }
+    }
+}
+pub struct GetUserByIdStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_user_by_id() -> GetUserByIdStmt {
+    GetUserByIdStmt("SELECT * FROM user_view WHERE id = $1", None)
+}
+impl GetUserByIdStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        id: &'a i32,
+    ) -> UserQuery<'c, 'a, 's, C, User, 1> {
+        UserQuery {
+            client,
+            params: [id],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |row: &tokio_postgres::Row| -> Result<UserBorrowed, tokio_postgres::Error> {
+                Ok(UserBorrowed {
+                    id: row.try_get(0)?,
+                    username: row.try_get(1)?,
+                    mod_level: row.try_get(2)?,
+                    stars: row.try_get(3)?,
+                    demons: row.try_get(4)?,
+                    creator_points: row.try_get(5)?,
+                    diamonds: row.try_get(6)?,
+                    moons: row.try_get(7)?,
+                    secret_coins: row.try_get(8)?,
+                    user_coins: row.try_get(9)?,
+                    cube: row.try_get(10)?,
+                    ship: row.try_get(11)?,
+                    ball: row.try_get(12)?,
+                    ufo: row.try_get(13)?,
+                    wave: row.try_get(14)?,
+                    robot: row.try_get(15)?,
+                    spider: row.try_get(16)?,
+                    swing: row.try_get(17)?,
+                    jetpack: row.try_get(18)?,
+                    glow: row.try_get(19)?,
+                    explosion: row.try_get(20)?,
+                    icon: row.try_get(21)?,
+                    icon_type: row.try_get(22)?,
+                    color1: row.try_get(23)?,
+                    color2: row.try_get(24)?,
+                    color3: row.try_get(25)?,
+                    accept_friend_requests: row.try_get(26)?,
+                    message_setting: row.try_get(27)?,
+                    comment_setting: row.try_get(28)?,
+                    youtube: row.try_get(29)?,
+                    twitter: row.try_get(30)?,
+                    twitch: row.try_get(31)?,
+                    discord: row.try_get(32)?,
+                    instagram: row.try_get(33)?,
+                    tiktok: row.try_get(34)?,
+                    created_at: row.try_get(35)?,
+                })
+            },
+            mapper: |it| User::from(it),
+        }
+    }
+}
+pub struct SearchUsersStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn search_users() -> SearchUsersStmt {
+    SearchUsersStmt(
+        "SELECT * FROM user_view WHERE username ILIKE '%' || $1 || '%' AND id != $2 LIMIT 10 OFFSET $3",
+        None,
+    )
+}
+impl SearchUsersStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+        &'s self,
+        client: &'c C,
+        search: &'a T1,
+        user_id: &'a i32,
+        offset: &'a i64,
+    ) -> UserQuery<'c, 'a, 's, C, User, 3> {
+        UserQuery {
+            client,
+            params: [search, user_id, offset],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |row: &tokio_postgres::Row| -> Result<UserBorrowed, tokio_postgres::Error> {
+                Ok(UserBorrowed {
+                    id: row.try_get(0)?,
+                    username: row.try_get(1)?,
+                    mod_level: row.try_get(2)?,
+                    stars: row.try_get(3)?,
+                    demons: row.try_get(4)?,
+                    creator_points: row.try_get(5)?,
+                    diamonds: row.try_get(6)?,
+                    moons: row.try_get(7)?,
+                    secret_coins: row.try_get(8)?,
+                    user_coins: row.try_get(9)?,
+                    cube: row.try_get(10)?,
+                    ship: row.try_get(11)?,
+                    ball: row.try_get(12)?,
+                    ufo: row.try_get(13)?,
+                    wave: row.try_get(14)?,
+                    robot: row.try_get(15)?,
+                    spider: row.try_get(16)?,
+                    swing: row.try_get(17)?,
+                    jetpack: row.try_get(18)?,
+                    glow: row.try_get(19)?,
+                    explosion: row.try_get(20)?,
+                    icon: row.try_get(21)?,
+                    icon_type: row.try_get(22)?,
+                    color1: row.try_get(23)?,
+                    color2: row.try_get(24)?,
+                    color3: row.try_get(25)?,
+                    accept_friend_requests: row.try_get(26)?,
+                    message_setting: row.try_get(27)?,
+                    comment_setting: row.try_get(28)?,
+                    youtube: row.try_get(29)?,
+                    twitter: row.try_get(30)?,
+                    twitch: row.try_get(31)?,
+                    discord: row.try_get(32)?,
+                    instagram: row.try_get(33)?,
+                    tiktok: row.try_get(34)?,
+                    created_at: row.try_get(35)?,
+                })
+            },
+            mapper: |it| User::from(it),
+        }
+    }
+}
+impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
+    crate::client::async_::Params<
+        'c,
+        'a,
+        's,
+        SearchUsersParams<T1>,
+        UserQuery<'c, 'a, 's, C, User, 3>,
+        C,
+    > for SearchUsersStmt
+{
+    fn params(
+        &'s self,
+        client: &'c C,
+        params: &'a SearchUsersParams<T1>,
+    ) -> UserQuery<'c, 'a, 's, C, User, 3> {
+        self.bind(client, &params.search, &params.user_id, &params.offset)
     }
 }

@@ -1,12 +1,33 @@
+DROP TYPE IF EXISTS mod_level;
+CREATE TYPE mod_level AS ENUM (
+    'None',
+    'Moderator',
+    'ElderModerator',
+    'LeaderboardModerator'
+);
+
+DROP TYPE IF EXISTS message_setting;
+CREATE TYPE message_setting AS ENUM (
+    'All',
+    'FriendsOnly',
+    'None'
+);
+
+DROP TYPE IF EXISTS comment_setting;
+CREATE TYPE comment_setting AS ENUM (
+    'All',
+    'FriendsOnly',
+    'None'
+);
+
 CREATE TABLE users (
     id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     username VARCHAR(32) NOT NULL CONSTRAINT unique_username UNIQUE,
     email VARCHAR(255) NOT NULL CONSTRAINT unique_email UNIQUE,
     hash BYTEA NOT NULL,
     salt BYTEA NOT NULL,
-    save_data TEXT NOT NULL DEFAULT '',
     is_activated BOOLEAN NOT NULL DEFAULT TRUE,
-    mod_level SMALLINT NOT NULL DEFAULT 0,
+    mod_level mod_level NOT NULL DEFAULT 'None',
     udid TEXT NOT NULL DEFAULT '',
 
     stars INTEGER NOT NULL DEFAULT 0,
@@ -35,9 +56,9 @@ CREATE TABLE users (
     color2 SMALLINT NOT NULL DEFAULT 3,
     color3 SMALLINT NOT NULL DEFAULT -1,
 
-    message_setting SMALLINT NOT NULL DEFAULT 0,
-    friend_setting SMALLINT NOT NULL DEFAULT 0,
-    comment_setting SMALLINT NOT NULL DEFAULT 0,
+    accept_friend_requests BOOLEAN NOT NULL DEFAULT TRUE,
+    message_setting message_setting NOT NULL DEFAULT 'All',
+    comment_setting comment_setting NOT NULL DEFAULT 'All',
 
     youtube VARCHAR(255) NOT NULL DEFAULT '',
     twitter VARCHAR(255) NOT NULL DEFAULT '',
@@ -47,4 +68,44 @@ CREATE TABLE users (
     tiktok VARCHAR(255) NOT NULL DEFAULT '',
     
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-)
+);
+
+CREATE VIEW user_view AS
+SELECT 
+    id,
+    username,
+    mod_level,
+    stars,
+    demons,
+    creator_points,
+    diamonds,
+    moons,
+    secret_coins,
+    user_coins,
+    cube,
+    ship,
+    ball,
+    ufo,
+    wave,
+    robot,
+    spider,
+    swing,
+    jetpack,
+    glow,
+    explosion,
+    icon,
+    icon_type,
+    color1,
+    color2,
+    color3,
+    accept_friend_requests,
+    message_setting,
+    comment_setting,
+    youtube,
+    twitter,
+    twitch,
+    discord,
+    instagram,
+    tiktok,
+    created_at
+FROM users;

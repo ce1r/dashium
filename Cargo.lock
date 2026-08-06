@@ -80,11 +80,14 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "serde_core",
+ "serde_json",
+ "serde_path_to_error",
  "sync_wrapper",
  "tokio",
  "tower",
  "tower-layer",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -103,6 +106,7 @@ dependencies = [
  "sync_wrapper",
  "tower-layer",
  "tower-service",
+ "tracing",
 ]
 
 [[package]]
@@ -285,6 +289,7 @@ dependencies = [
  "postgres",
  "postgres-protocol",
  "postgres-types",
+ "serde",
  "tokio-postgres",
 ]
 

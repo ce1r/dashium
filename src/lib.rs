@@ -3,6 +3,7 @@
 use axum::Router;
 use tower_http::trace::TraceLayer;
 
+mod api;
 mod database;
 mod error;
 mod level;
@@ -17,6 +18,7 @@ pub use error::Result;
 
 pub fn setup() -> Router {
     Router::new()
+        .nest("/api", api::routes())
         .nest("/api/legacy", gd_routes())
         .layer(TraceLayer::new_for_http())
 }

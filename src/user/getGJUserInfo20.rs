@@ -2,7 +2,10 @@ use crate::Database;
 use crate::Result;
 use crate::gd_format;
 use axum_extra::extract::Form;
-use cornucopia::queries::user::get_user;
+use cornucopia::queries::user::get_user_by_id;
+use cornucopia::types::CommentSetting;
+use cornucopia::types::MessageSetting;
+use cornucopia::types::ModLevel;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -13,10 +16,29 @@ pub struct Data {
 pub async fn getGJUserInfo20(Form(form): Form<Data>) -> Result<String> {
     let client = Database::acquire().await?;
 
-    let user = get_user()
+    let user = get_user_by_id()
         .bind(&client, &form.targetAccountID)
         .one()
         .await?;
+
+    let mod_level = match user.mod_level {
+        ModLevel::None => 0,
+        ModLevel::Moderator => 1,
+        ModLevel::ElderModerator => 2,
+        ModLevel::LeaderboardModerator => 3,
+    };
+
+    let message_setting = match user.message_setting {
+        MessageSetting::All => 0,
+        MessageSetting::FriendsOnly => 1,
+        MessageSetting::None => 2,
+    };
+
+    let comment_setting = match user.comment_setting {
+        CommentSetting::All => 0,
+        CommentSetting::FriendsOnly => 1,
+        CommentSetting::None => 2,
+    };
 
     let response = gd_format!(
         ":",
@@ -30,8 +52,8 @@ pub async fn getGJUserInfo20(Form(form): Form<Data>) -> Result<String> {
         13 => user.secret_coins,
         16 => user.id,
         17 => user.user_coins,
-        18 => user.message_setting,
-        19 => user.friend_setting,
+        18 => message_setting,
+        19 => u8::from(user.accept_friend_requests),
         20 => user.youtube,
         21 => user.cube,
         22 => user.ship,
@@ -40,14 +62,14 @@ pub async fn getGJUserInfo20(Form(form): Form<Data>) -> Result<String> {
         25 => user.wave,
         26 => user.robot,
         28 => user.glow,
-        29 => u8::from(user.is_activated),
+        29 => 1,
         43 => user.spider,
         44 => user.twitter,
         45 => user.twitch,
         46 => user.diamonds,
         48 => user.explosion,
-        49 => user.mod_level,
-        50 => user.comment_setting,
+        49 => mod_level,
+        50 => comment_setting,
         51 => user.color3,
         52 => user.moons,
         53 => user.swing,

@@ -1,0 +1,12 @@
+[manifest.dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+chrono = { version = "0.4.45", features = ["serde"] }
+
+[types.custom.mod_level]
+derive-traits = ["serde::Serialize"]
+
+[types.custom.message_setting]
+derive-traits = ["serde::Serialize"]
+
+[types.custom.comment_setting]
+derive-traits = ["serde::Serialize"]
