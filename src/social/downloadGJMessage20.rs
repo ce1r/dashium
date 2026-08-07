@@ -1,8 +1,7 @@
 use crate::Database;
 use crate::Result;
 use crate::gd_format;
-use crate::util::cyclic_xor;
-use crate::util::verify_gjp2;
+use crate::util;
 use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
@@ -22,7 +21,7 @@ pub struct Data {
 
 pub async fn downloadGJMessage20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
-    verify_gjp2(&client, form.accountID, &form.gjp2).await?;
+    util::verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     let message = download_message()
         .bind(&client, &form.messageID, &form.accountID)
@@ -36,7 +35,7 @@ pub async fn downloadGJMessage20(Form(form): Form<Data>) -> Result<impl IntoResp
         .replace(" ago", "");
 
     let mut body = message.body.into_bytes();
-    cyclic_xor(&mut body, MESSAGE_XOR_KEY);
+    util::cyclic_xor(&mut body, MESSAGE_XOR_KEY);
     let body = URL_SAFE.encode(body);
 
     let response = gd_format!(

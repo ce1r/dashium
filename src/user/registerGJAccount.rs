@@ -1,11 +1,9 @@
 use crate::Database;
 use crate::Result;
-use crate::util::is_ascii_alphanumeric;
-use crate::util::salt_and_sha1;
+use crate::util;
 use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::create_user;
-use cornucopia::tokio_postgres::error::SqlState;
 use rand::TryRng;
 use serde::Deserialize;
 use sha2::Digest;
@@ -19,29 +17,12 @@ pub struct Data {
 }
 
 pub async fn registerGJAccount(Form(form): Form<Data>) -> Result<impl IntoResponse> {
-    if form.userName.len() > 20 {
-        return Ok("-4");
-    }
-
-    if !is_ascii_alphanumeric(&form.userName) {
-        return Ok("-4");
-    }
-
-    if form.userName.len() < 3 {
-        return Ok("-9");
-    }
-
-    if form.password.len() < 8 {
-        return Ok("-8");
-    }
-
-    if !is_ascii_alphanumeric(&form.password) {
-        return Ok("-5");
-    }
-
     let client = Database::acquire().await?;
 
-    let gjp2 = salt_and_sha1(&form.password, "mI29fmAnxgTs");
+    util::is_valid_username(&form.userName)?;
+    util::is_valid_password(&form.password)?;
+
+    let gjp2 = util::salt_and_sha1(&form.password, "mI29fmAnxgTs");
 
     let mut salt = [0u8; 16];
     rand::rng().try_fill_bytes(&mut salt);
@@ -51,7 +32,7 @@ pub async fn registerGJAccount(Form(form): Form<Data>) -> Result<impl IntoRespon
     hasher.update(salt);
     let hash = hasher.finalize();
 
-    let result = create_user()
+    create_user()
         .bind(
             &client,
             &form.userName,
@@ -59,24 +40,7 @@ pub async fn registerGJAccount(Form(form): Form<Data>) -> Result<impl IntoRespon
             &hash.to_vec(),
             &salt.to_vec(),
         )
-        .await;
+        .await?;
 
-    match result {
-        Ok(_) => Ok("1"),
-        Err(e) => {
-            let Some(db_err) = e.as_db_error() else {
-                return Ok("-1");
-            };
-
-            if db_err.code() != &SqlState::UNIQUE_VIOLATION {
-                return Ok("-1");
-            }
-
-            Ok(match db_err.constraint() {
-                Some("unique_username") => "-2",
-                Some("unique_email") => "-3",
-                _ => "-1",
-            })
-        }
-    }
+    Ok("1")
 }

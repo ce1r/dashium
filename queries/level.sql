@@ -60,3 +60,9 @@ LIMIT 10 OFFSET :offset;
 SELECT *
 FROM level_view
 WHERE id = :level_id;
+
+--! get_levels_of_user : Level
+SELECT level_view.*
+FROM level_view
+JOIN users ON users.id = level_view.user_id
+WHERE users.username = :username;

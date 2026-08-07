@@ -1,7 +1,7 @@
 use crate::Database;
 use crate::Result;
 use crate::gd_format;
-use crate::util::salt_and_sha1;
+use crate::util;
 use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use cornucopia::queries::level::Level;
@@ -113,5 +113,5 @@ fn generate_hash(levels: &[Level]) -> String {
         let _ = write!(hash_input, "{first}{last}{stars}{verified}");
     }
 
-    salt_and_sha1(&hash_input, "xI25fpAapCQg")
+    util::salt_and_sha1(&hash_input, "xI25fpAapCQg")
 }

@@ -1,7 +1,7 @@
 use crate::Database;
 use crate::Result;
 use crate::gd_format;
-use crate::util::salt_and_sha1;
+use crate::util;
 use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
@@ -85,7 +85,7 @@ pub async fn downloadGJLevel22(Form(form): Form<Data>) -> Result<impl IntoRespon
 
 pub fn generate_hash1(level_string: &str) -> String {
     if level_string.len() < 41 {
-        return salt_and_sha1(level_string, "xI25fpAapCQg");
+        return util::salt_and_sha1(level_string, "xI25fpAapCQg");
     }
 
     let mut hash_chars = "????????????????????????????????????????xI25fpAapCQg"
@@ -102,7 +102,7 @@ pub fn generate_hash1(level_string: &str) -> String {
 
     let hash = hash_chars.into_iter().collect::<String>();
 
-    salt_and_sha1(&hash, "")
+    util::salt_and_sha1(&hash, "")
 }
 
 pub fn generate_hash2(level: &Level, daily_id: i32) -> String {
@@ -118,5 +118,5 @@ pub fn generate_hash2(level: &Level, daily_id: i32) -> String {
         daily_id
     );
 
-    salt_and_sha1(&hash_input, "xI25fpAapCQg")
+    util::salt_and_sha1(&hash_input, "xI25fpAapCQg")
 }

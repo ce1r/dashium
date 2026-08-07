@@ -1,6 +1,6 @@
 use crate::Database;
 use crate::Result;
-use crate::util::verify_gjp2;
+use crate::util;
 use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::update_settings;
@@ -25,7 +25,7 @@ pub struct Data {
 
 pub async fn updateGJAccSettings20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
-    verify_gjp2(&client, form.accountID, &form.gjp2).await?;
+    util::verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     let accept_friend_requests = form.frS == 0;
     let message_setting = match form.mS {

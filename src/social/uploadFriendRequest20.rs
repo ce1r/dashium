@@ -1,6 +1,6 @@
 use crate::Database;
 use crate::Result;
-use crate::util::verify_gjp2;
+use crate::util;
 use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
@@ -20,7 +20,7 @@ pub async fn uploadFriendRequest20(Form(form): Form<Data>) -> Result<impl IntoRe
     let body = String::from_utf8(URL_SAFE.decode(&form.comment)?)?;
 
     let client = Database::acquire().await?;
-    verify_gjp2(&client, form.accountID, &form.gjp2).await?;
+    util::verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     create_friend_request()
         .bind(&client, &form.accountID, &form.toAccountID, &body)

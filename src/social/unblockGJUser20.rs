@@ -1,6 +1,6 @@
 use crate::Database;
 use crate::Result;
-use crate::util::verify_gjp2;
+use crate::util;
 use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use cornucopia::queries::social::unblock_user;
@@ -15,7 +15,7 @@ pub struct Data {
 
 pub async fn unblockGJUser20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
-    verify_gjp2(&client, form.accountID, &form.gjp2).await?;
+    util::verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     unblock_user()
         .bind(&client, &form.accountID, &form.targetAccountID)

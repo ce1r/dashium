@@ -1,6 +1,6 @@
 use crate::Database;
 use crate::Result;
-use crate::util::verify_gjp2;
+use crate::util;
 use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
@@ -20,7 +20,7 @@ pub async fn uploadGJAccComment20(Form(form): Form<Data>) -> Result<impl IntoRes
     let body = String::from_utf8(decoded)?;
 
     let client = Database::acquire().await?;
-    verify_gjp2(&client, form.accountID, &form.gjp2).await?;
+    util::verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
     let comment_id = create_post()
         .bind(&client, &form.accountID, &body)

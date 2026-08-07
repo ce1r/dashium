@@ -24,10 +24,6 @@ pub async fn verify_gjp2(client: &Object, user_id: i32, gjp2: &str) -> Result<Ve
     }
 }
 
-pub fn is_ascii_alphanumeric(input: &str) -> bool {
-    input.chars().all(|c| c.is_ascii_alphanumeric())
-}
-
 pub fn salt_and_sha1(input: &str, salt: &str) -> String {
     let mut hasher = Sha1::new();
     hasher.update(input.as_bytes());
@@ -43,4 +39,26 @@ pub fn cyclic_xor(data: &mut [u8], key: &[u8]) {
 
 pub fn seconds_until_midnight() -> u32 {
     86400 - Local::now().time().num_seconds_from_midnight()
+}
+
+pub fn is_valid_username(username: &str) -> Result<()> {
+    if username.len() < 3
+        || username.len() > 20
+        || !username.chars().all(|c| c.is_ascii_alphanumeric())
+    {
+        return Err(AppError::Unhandled);
+    }
+
+    Ok(())
+}
+
+pub fn is_valid_password(password: &str) -> Result<()> {
+    if password.len() < 8
+        || password.len() > 20
+        || !password.chars().all(|c| c.is_ascii_alphanumeric())
+    {
+        return Err(AppError::Unhandled);
+    }
+
+    Ok(())
 }

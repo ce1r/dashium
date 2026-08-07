@@ -6,6 +6,7 @@ mod user;
 
 pub fn routes() -> Router {
     Router::new()
-        .route("/user/{username}", get(user::get))
-        .route("/level/{level_id}", get(level::get))
+        .route("/users/{username}", get(user::get))
+        .route("/users/{username}/levels", get(user::get_levels))
+        .route("/levels/{level_id}", get(level::get))
 }

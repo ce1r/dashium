@@ -1,6 +1,6 @@
 use crate::Database;
 use crate::Result;
-use crate::util::verify_gjp2;
+use crate::util;
 use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
@@ -21,7 +21,7 @@ pub struct Data {
 
 pub async fn syncGJAccountNew(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
-    let hash: [u8; 32] = verify_gjp2(&client, form.accountID, &form.gjp2)
+    let hash: [u8; 32] = util::verify_gjp2(&client, form.accountID, &form.gjp2)
         .await?
         .try_into()
         .unwrap_or_default();

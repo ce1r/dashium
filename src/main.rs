@@ -7,6 +7,8 @@ use tokio::net::TcpListener;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
+const URL: &str = "127.0.0.1:64842";
+
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
@@ -22,8 +24,9 @@ async fn main() -> Result<()> {
     Database::init().await?;
 
     let app = dashium::setup();
-    let listener = TcpListener::bind("127.0.0.1:64842").await?;
+    let listener = TcpListener::bind(URL).await?;
 
+    tracing::info!("Server running at: http://{URL}");
     axum::serve(listener, app).await?;
 
     Ok(())

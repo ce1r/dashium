@@ -540,3 +540,68 @@ impl GetLevelStmt {
         }
     }
 }
+pub struct GetLevelsOfUserStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_levels_of_user() -> GetLevelsOfUserStmt {
+    GetLevelsOfUserStmt(
+        "SELECT level_view.* FROM level_view JOIN users ON users.id = level_view.user_id WHERE users.username = $1",
+        None,
+    )
+}
+impl GetLevelsOfUserStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+        &'s self,
+        client: &'c C,
+        username: &'a T1,
+    ) -> LevelQuery<'c, 'a, 's, C, Level, 1> {
+        LevelQuery {
+            client,
+            params: [username],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |row: &tokio_postgres::Row| -> Result<LevelBorrowed, tokio_postgres::Error> {
+                Ok(LevelBorrowed {
+                    id: row.try_get(0)?,
+                    name: row.try_get(1)?,
+                    description: row.try_get(2)?,
+                    user_id: row.try_get(3)?,
+                    version: row.try_get(4)?,
+                    original_level_id: row.try_get(5)?,
+                    length: row.try_get(6)?,
+                    objects: row.try_get(7)?,
+                    requested_stars: row.try_get(8)?,
+                    stars: row.try_get(9)?,
+                    coins: row.try_get(10)?,
+                    likes: row.try_get(11)?,
+                    dislikes: row.try_get(12)?,
+                    downloads: row.try_get(13)?,
+                    difficulty: row.try_get(14)?,
+                    demon_difficulty: row.try_get(15)?,
+                    is_rated: row.try_get(16)?,
+                    is_featured: row.try_get(17)?,
+                    feature_score: row.try_get(18)?,
+                    is_auto: row.try_get(19)?,
+                    is_ldm: row.try_get(20)?,
+                    is_two_player: row.try_get(21)?,
+                    is_platformer: row.try_get(22)?,
+                    is_gauntlet: row.try_get(23)?,
+                    is_demon: row.try_get(24)?,
+                    has_verified_coins: row.try_get(25)?,
+                    official_song_id: row.try_get(26)?,
+                    song_id: row.try_get(27)?,
+                    visibility: row.try_get(28)?,
+                    featured_at: row.try_get(29)?,
+                    created_at: row.try_get(30)?,
+                    username: row.try_get(31)?,
+                })
+            },
+            mapper: |it| Level::from(it),
+        }
+    }
+}
