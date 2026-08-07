@@ -68,7 +68,7 @@ CREATE TABLE levels (
     
     feature_score INTEGER NOT NULL DEFAULT 0, 
 
-    is_auto BOOLEAN NOT NULL DEFAULT FALSE,
+    is_auto BOOLEAN GENERATED ALWAYS AS (stars = 1) STORED,
     is_ldm BOOLEAN NOT NULL DEFAULT FALSE,
     is_two_player BOOLEAN NOT NULL DEFAULT FALSE,
     is_platformer BOOLEAN NOT NULL DEFAULT FALSE,

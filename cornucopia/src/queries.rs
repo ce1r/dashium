@@ -1,5 +1,6 @@
 // This file was generated with `cornucopia`. Do not modify.
 
+pub mod comment;
 pub mod level;
 pub mod post;
 pub mod reward;

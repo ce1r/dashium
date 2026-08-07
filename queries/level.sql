@@ -14,7 +14,6 @@ INSERT INTO levels (
     requested_stars,
     coins,
 
-    is_auto,
     is_ldm,
     is_two_player,
     is_platformer,
@@ -37,7 +36,6 @@ SELECT
     :requested_stars,
     :coins,
 
-    :is_auto,
     :is_ldm,
     :is_two_player,
     :is_platformer,

@@ -9,3 +9,10 @@ CREATE TABLE messages (
 
     CONSTRAINT no_self_message CHECK (user_id != target_id)
 );
+
+CREATE VIEW message_view AS
+SELECT
+    messages.*,
+    users.username
+FROM messages
+JOIN users ON messages.user_id = users.id;

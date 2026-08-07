@@ -9,3 +9,21 @@ CREATE TABLE friend_requests (
     CONSTRAINT unique_friend_request UNIQUE (user_id, target_id),
     CONSTRAINT no_self_friend_request CHECK (user_id != target_id)
 );
+
+CREATE VIEW friend_request_view AS
+SELECT
+    friend_requests.id,
+    friend_requests.user_id,
+    friend_requests.target_id,
+    friend_requests.body,
+    friend_requests.is_new,
+    friend_requests.created_at,
+    users.username,
+    users.color1,
+    users.color2,
+    users.color3,
+    users.icon,
+    users.icon_type,
+    users.glow
+FROM friend_requests
+JOIN users ON users.id = friend_requests.user_id;

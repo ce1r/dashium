@@ -1,9 +1,11 @@
+#![forbid(unsafe_code)]
 #![allow(non_snake_case)]
 
 use axum::Router;
 use tower_http::trace::TraceLayer;
 
 mod api;
+mod comment;
 mod database;
 mod error;
 mod level;
@@ -30,6 +32,7 @@ pub fn gd_routes() -> Router {
         .merge(level::routes())
         .merge(reward::routes())
         .merge(social::routes())
+        .merge(comment::routes())
 }
 
 #[macro_export]

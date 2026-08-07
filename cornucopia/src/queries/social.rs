@@ -128,9 +128,10 @@ pub struct FriendRequest {
     pub is_new: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub username: String,
-    pub icon: i16,
     pub color1: i16,
     pub color2: i16,
+    pub color3: i16,
+    pub icon: i16,
     pub icon_type: i16,
     pub glow: i16,
 }
@@ -142,9 +143,10 @@ pub struct FriendRequestBorrowed<'a> {
     pub is_new: bool,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub username: &'a str,
-    pub icon: i16,
     pub color1: i16,
     pub color2: i16,
+    pub color3: i16,
+    pub icon: i16,
     pub icon_type: i16,
     pub glow: i16,
 }
@@ -158,9 +160,10 @@ impl<'a> From<FriendRequestBorrowed<'a>> for FriendRequest {
             is_new,
             created_at,
             username,
-            icon,
             color1,
             color2,
+            color3,
+            icon,
             icon_type,
             glow,
         }: FriendRequestBorrowed<'a>,
@@ -173,9 +176,10 @@ impl<'a> From<FriendRequestBorrowed<'a>> for FriendRequest {
             is_new,
             created_at,
             username: username.into(),
-            icon,
             color1,
             color2,
+            color3,
+            icon,
             icon_type,
             glow,
         }
@@ -707,7 +711,7 @@ impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql, T2: crate::String
 pub struct GetMessagesStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn get_messages() -> GetMessagesStmt {
     GetMessagesStmt(
-        "SELECT m.*, u.username FROM messages m JOIN users u ON m.user_id = u.id WHERE m.target_id = $1 ORDER BY m.created_at DESC LIMIT 10 OFFSET $2",
+        "SELECT * FROM message_view WHERE target_id = $1 ORDER BY created_at DESC LIMIT 10 OFFSET $2",
         None,
     )
 }
@@ -768,7 +772,7 @@ impl<'c, 'a, 's, C: GenericClient>
 pub struct GetSentMessagesStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn get_sent_messages() -> GetSentMessagesStmt {
     GetSentMessagesStmt(
-        "SELECT m.*, u.username FROM messages m JOIN users u ON m.target_id = u.id WHERE m.user_id = $1 ORDER BY m.created_at DESC LIMIT 10 OFFSET $2",
+        "SELECT * FROM message_view WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10 OFFSET $2",
         None,
     )
 }
@@ -1029,7 +1033,7 @@ impl<'a, C: GenericClient + Send + Sync, T1: crate::StringSql>
 pub struct GetFriendRequestsStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn get_friend_requests() -> GetFriendRequestsStmt {
     GetFriendRequestsStmt(
-        "SELECT fr.id, fr.user_id, fr.target_id, fr.body, fr.is_new, fr.created_at, u.username, u.icon, u.color1, u.color2, u.icon_type, u.glow FROM friend_requests fr JOIN users u on u.id = fr.user_id WHERE fr.target_id = $1 ORDER BY fr.created_at DESC LIMIT 20 OFFSET $2",
+        "SELECT * FROM friend_request_view WHERE target_id = $1 ORDER BY created_at DESC LIMIT 20 OFFSET $2",
         None,
     )
 }
@@ -1062,11 +1066,12 @@ impl GetFriendRequestsStmt {
                         is_new: row.try_get(4)?,
                         created_at: row.try_get(5)?,
                         username: row.try_get(6)?,
-                        icon: row.try_get(7)?,
-                        color1: row.try_get(8)?,
-                        color2: row.try_get(9)?,
-                        icon_type: row.try_get(10)?,
-                        glow: row.try_get(11)?,
+                        color1: row.try_get(7)?,
+                        color2: row.try_get(8)?,
+                        color3: row.try_get(9)?,
+                        icon: row.try_get(10)?,
+                        icon_type: row.try_get(11)?,
+                        glow: row.try_get(12)?,
                     })
                 },
             mapper: |it| FriendRequest::from(it),
@@ -1094,7 +1099,7 @@ impl<'c, 'a, 's, C: GenericClient>
 pub struct GetSentFriendRequestsStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn get_sent_friend_requests() -> GetSentFriendRequestsStmt {
     GetSentFriendRequestsStmt(
-        "SELECT fr.id, fr.user_id, fr.target_id, fr.body, fr.is_new, fr.created_at, u.username, u.icon, u.color1, u.color2, u.icon_type, u.glow FROM friend_requests fr JOIN users u on u.id = fr.target_id WHERE fr.user_id = $1 ORDER BY fr.created_at DESC LIMIT 20 OFFSET $2",
+        "SELECT * FROM friend_request_view WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20 OFFSET $2",
         None,
     )
 }
@@ -1127,11 +1132,12 @@ impl GetSentFriendRequestsStmt {
                         is_new: row.try_get(4)?,
                         created_at: row.try_get(5)?,
                         username: row.try_get(6)?,
-                        icon: row.try_get(7)?,
-                        color1: row.try_get(8)?,
-                        color2: row.try_get(9)?,
-                        icon_type: row.try_get(10)?,
-                        glow: row.try_get(11)?,
+                        color1: row.try_get(7)?,
+                        color2: row.try_get(8)?,
+                        color3: row.try_get(9)?,
+                        icon: row.try_get(10)?,
+                        icon_type: row.try_get(11)?,
+                        glow: row.try_get(12)?,
                     })
                 },
             mapper: |it| FriendRequest::from(it),

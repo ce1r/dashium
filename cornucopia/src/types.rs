@@ -2,6 +2,91 @@
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[allow(non_camel_case_types)]
+pub enum ModLevel {
+    None,
+    Moderator,
+    ElderModerator,
+    LeaderboardModerator,
+}
+impl<'a> postgres_types::ToSql for ModLevel {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        buf: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        let s = match *self {
+            ModLevel::None => "None",
+            ModLevel::Moderator => "Moderator",
+            ModLevel::ElderModerator => "ElderModerator",
+            ModLevel::LeaderboardModerator => "LeaderboardModerator",
+        };
+        buf.extend_from_slice(s.as_bytes());
+        std::result::Result::Ok(postgres_types::IsNull::No)
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "mod_level" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 4 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "None" => true,
+                    "Moderator" => true,
+                    "ElderModerator" => true,
+                    "LeaderboardModerator" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+    fn to_sql_checked(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        postgres_types::__to_sql_checked(self, ty, out)
+    }
+}
+impl<'a> postgres_types::FromSql<'a> for ModLevel {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        buf: &'a [u8],
+    ) -> Result<ModLevel, Box<dyn std::error::Error + Sync + Send>> {
+        match std::str::from_utf8(buf)? {
+            "None" => Ok(ModLevel::None),
+            "Moderator" => Ok(ModLevel::Moderator),
+            "ElderModerator" => Ok(ModLevel::ElderModerator),
+            "LeaderboardModerator" => Ok(ModLevel::LeaderboardModerator),
+            s => Result::Err(Into::into(format!("invalid variant `{}`", s))),
+        }
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "mod_level" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 4 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "None" => true,
+                    "Moderator" => true,
+                    "ElderModerator" => true,
+                    "LeaderboardModerator" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[allow(non_camel_case_types)]
 pub enum LevelLength {
     Tiny,
     Short,
@@ -438,91 +523,6 @@ impl<'a> postgres_types::FromSql<'a> for ItemType {
                     "Orbs" => true,
                     "Coins" => true,
                     "Stars" => true,
-                    _ => false,
-                })
-            }
-            _ => false,
-        }
-    }
-}
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
-#[allow(non_camel_case_types)]
-pub enum ModLevel {
-    None,
-    Moderator,
-    ElderModerator,
-    LeaderboardModerator,
-}
-impl<'a> postgres_types::ToSql for ModLevel {
-    fn to_sql(
-        &self,
-        ty: &postgres_types::Type,
-        buf: &mut postgres_types::private::BytesMut,
-    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
-        let s = match *self {
-            ModLevel::None => "None",
-            ModLevel::Moderator => "Moderator",
-            ModLevel::ElderModerator => "ElderModerator",
-            ModLevel::LeaderboardModerator => "LeaderboardModerator",
-        };
-        buf.extend_from_slice(s.as_bytes());
-        std::result::Result::Ok(postgres_types::IsNull::No)
-    }
-    fn accepts(ty: &postgres_types::Type) -> bool {
-        if ty.name() != "mod_level" {
-            return false;
-        }
-        match *ty.kind() {
-            postgres_types::Kind::Enum(ref variants) => {
-                if variants.len() != 4 {
-                    return false;
-                }
-                variants.iter().all(|v| match &**v {
-                    "None" => true,
-                    "Moderator" => true,
-                    "ElderModerator" => true,
-                    "LeaderboardModerator" => true,
-                    _ => false,
-                })
-            }
-            _ => false,
-        }
-    }
-    fn to_sql_checked(
-        &self,
-        ty: &postgres_types::Type,
-        out: &mut postgres_types::private::BytesMut,
-    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
-        postgres_types::__to_sql_checked(self, ty, out)
-    }
-}
-impl<'a> postgres_types::FromSql<'a> for ModLevel {
-    fn from_sql(
-        ty: &postgres_types::Type,
-        buf: &'a [u8],
-    ) -> Result<ModLevel, Box<dyn std::error::Error + Sync + Send>> {
-        match std::str::from_utf8(buf)? {
-            "None" => Ok(ModLevel::None),
-            "Moderator" => Ok(ModLevel::Moderator),
-            "ElderModerator" => Ok(ModLevel::ElderModerator),
-            "LeaderboardModerator" => Ok(ModLevel::LeaderboardModerator),
-            s => Result::Err(Into::into(format!("invalid variant `{}`", s))),
-        }
-    }
-    fn accepts(ty: &postgres_types::Type) -> bool {
-        if ty.name() != "mod_level" {
-            return false;
-        }
-        match *ty.kind() {
-            postgres_types::Kind::Enum(ref variants) => {
-                if variants.len() != 4 {
-                    return false;
-                }
-                variants.iter().all(|v| match &**v {
-                    "None" => true,
-                    "Moderator" => true,
-                    "ElderModerator" => true,
-                    "LeaderboardModerator" => true,
                     _ => false,
                 })
             }

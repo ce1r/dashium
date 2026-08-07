@@ -37,23 +37,17 @@ FROM users
 WHERE id = :user_id;
 
 --! get_messages : Message
-SELECT
-    m.*,
-    u.username
-FROM messages m
-JOIN users u ON m.user_id = u.id
-WHERE m.target_id = :target_id
-ORDER BY m.created_at DESC
+SELECT *
+FROM message_view
+WHERE target_id = :target_id
+ORDER BY created_at DESC
 LIMIT 10 OFFSET :offset;
 
 --! get_sent_messages : Message
-SELECT
-    m.*,
-    u.username
-FROM messages m
-JOIN users u ON m.target_id = u.id
-WHERE m.user_id = :user_id
-ORDER BY m.created_at DESC
+SELECT *
+FROM message_view
+WHERE user_id = :user_id
+ORDER BY created_at DESC
 LIMIT 10 OFFSET :offset;
 
 --! download_message: Message
@@ -89,43 +83,17 @@ INSERT INTO friend_requests (
 );
 
 --! get_friend_requests: FriendRequest
-SELECT
-    fr.id,
-    fr.user_id,
-    fr.target_id,
-    fr.body,
-    fr.is_new,
-    fr.created_at,
-    u.username,
-    u.icon,
-    u.color1,
-    u.color2,
-    u.icon_type,
-    u.glow
-FROM friend_requests fr
-JOIN users u on u.id = fr.user_id
-WHERE fr.target_id = :user_id
-ORDER BY fr.created_at DESC
+SELECT *
+FROM friend_request_view
+WHERE target_id = :user_id
+ORDER BY created_at DESC
 LIMIT 20 OFFSET :offset;
 
 --! get_sent_friend_requests: FriendRequest
-SELECT
-    fr.id,
-    fr.user_id,
-    fr.target_id,
-    fr.body,
-    fr.is_new,
-    fr.created_at,
-    u.username,
-    u.icon,
-    u.color1,
-    u.color2,
-    u.icon_type,
-    u.glow
-FROM friend_requests fr
-JOIN users u on u.id = fr.target_id
-WHERE fr.user_id = :user_id
-ORDER BY fr.created_at DESC
+SELECT *
+FROM friend_request_view
+WHERE user_id = :user_id
+ORDER BY created_at DESC
 LIMIT 20 OFFSET :offset;
 
 --! read_friend_request

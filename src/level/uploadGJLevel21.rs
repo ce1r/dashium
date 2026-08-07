@@ -32,9 +32,6 @@ pub struct Data {
     coins: i16,
 
     #[serde_as(as = "BoolFromInt")]
-    auto: bool,
-
-    #[serde_as(as = "BoolFromInt")]
     ldm: bool,
 
     #[serde_as(as = "BoolFromInt")]
@@ -80,7 +77,6 @@ pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<impl IntoResponse
             &form.objects,
             &form.requestedStars,
             &form.coins,
-            &form.auto,
             &form.ldm,
             &form.twoPlayer,
             &is_platformer,
