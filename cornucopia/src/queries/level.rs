@@ -24,7 +24,7 @@ pub struct SearchLevelsParams<T1: crate::StringSql> {
     pub search: T1,
     pub offset: i64,
 }
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Level {
     pub id: i32,
     pub name: String,
@@ -397,7 +397,7 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>
 pub struct SearchLevelsStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn search_levels() -> SearchLevelsStmt {
     SearchLevelsStmt(
-        "SELECT levels.*, users.username FROM levels JOIN users ON levels.user_id = users.id WHERE levels.name ILIKE '%' || $1 || '%' LIMIT 10 OFFSET $2",
+        "SELECT * FROM level_view WHERE name ILIKE '%' || $1 || '%' LIMIT 10 OFFSET $2",
         None,
     )
 }
@@ -480,10 +480,7 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
 }
 pub struct GetLevelStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn get_level() -> GetLevelStmt {
-    GetLevelStmt(
-        "SELECT levels.*, users.username FROM levels JOIN users ON levels.user_id = users.id WHERE levels.id = $1",
-        None,
-    )
+    GetLevelStmt("SELECT * FROM level_view WHERE id = $1", None)
 }
 impl GetLevelStmt {
     pub async fn prepare<'a, C: GenericClient>(

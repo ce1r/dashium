@@ -3,6 +3,7 @@ use crate::Result;
 use crate::gd_format;
 use crate::util::cyclic_xor;
 use crate::util::verify_gjp2;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
@@ -19,7 +20,7 @@ pub struct Data {
     messageID: i32,
 }
 
-pub async fn downloadGJMessage20(Form(form): Form<Data>) -> Result<String> {
+pub async fn downloadGJMessage20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
     verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 

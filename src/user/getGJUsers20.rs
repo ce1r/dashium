@@ -1,6 +1,7 @@
 use crate::Database;
 use crate::Result;
 use crate::gd_format;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::search_users;
 use serde::Deserialize;
@@ -12,7 +13,7 @@ pub struct Data {
     page: i64,
 }
 
-pub async fn getGJUsers20(Form(form): Form<Data>) -> Result<String> {
+pub async fn getGJUsers20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
     let offset = form.page * 10;
 

@@ -1,6 +1,7 @@
 use crate::Database;
 use crate::Result;
 use crate::util::verify_gjp2;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
@@ -15,7 +16,7 @@ pub struct Data {
     toAccountID: i32,
 }
 
-pub async fn uploadFriendRequest20(Form(form): Form<Data>) -> Result<String> {
+pub async fn uploadFriendRequest20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let body = String::from_utf8(URL_SAFE.decode(&form.comment)?)?;
 
     let client = Database::acquire().await?;
@@ -25,5 +26,5 @@ pub async fn uploadFriendRequest20(Form(form): Form<Data>) -> Result<String> {
         .bind(&client, &form.accountID, &form.toAccountID, &body)
         .await?;
 
-    Ok("1".to_string())
+    Ok("1")
 }

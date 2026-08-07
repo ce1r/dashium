@@ -1,6 +1,6 @@
 // This file was generated with `cornucopia`. Do not modify.
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[allow(non_camel_case_types)]
 pub enum LevelLength {
     Tiny,
@@ -90,7 +90,7 @@ impl<'a> postgres_types::FromSql<'a> for LevelLength {
         }
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[allow(non_camel_case_types)]
 pub enum Visibility {
     Public,
@@ -170,7 +170,7 @@ impl<'a> postgres_types::FromSql<'a> for Visibility {
         }
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[allow(non_camel_case_types)]
 pub enum Difficulty {
     NA,
@@ -275,7 +275,7 @@ impl<'a> postgres_types::FromSql<'a> for Difficulty {
         }
     }
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[allow(non_camel_case_types)]
 pub enum DemonDifficulty {
     Easy,

@@ -2,6 +2,7 @@ use crate::Database;
 use crate::Result;
 use crate::util::is_ascii_alphanumeric;
 use crate::util::salt_and_sha1;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::create_user;
 use cornucopia::tokio_postgres::error::SqlState;
@@ -17,25 +18,25 @@ pub struct Data {
     password: String,
 }
 
-pub async fn registerGJAccount(Form(form): Form<Data>) -> Result<String> {
+pub async fn registerGJAccount(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     if form.userName.len() > 20 {
-        return Ok("-4".to_string());
+        return Ok("-4");
     }
 
     if !is_ascii_alphanumeric(&form.userName) {
-        return Ok("-4".to_string());
+        return Ok("-4");
     }
 
     if form.userName.len() < 3 {
-        return Ok("-9".to_string());
+        return Ok("-9");
     }
 
     if form.password.len() < 8 {
-        return Ok("-8".to_string());
+        return Ok("-8");
     }
 
     if !is_ascii_alphanumeric(&form.password) {
-        return Ok("-5".to_string());
+        return Ok("-5");
     }
 
     let client = Database::acquire().await?;
@@ -61,22 +62,21 @@ pub async fn registerGJAccount(Form(form): Form<Data>) -> Result<String> {
         .await;
 
     match result {
-        Ok(_) => Ok("1".to_string()),
+        Ok(_) => Ok("1"),
         Err(e) => {
             let Some(db_err) = e.as_db_error() else {
-                return Ok("-1".to_string());
+                return Ok("-1");
             };
 
             if db_err.code() != &SqlState::UNIQUE_VIOLATION {
-                return Ok("-1".to_string());
+                return Ok("-1");
             }
 
             Ok(match db_err.constraint() {
                 Some("unique_username") => "-2",
                 Some("unique_email") => "-3",
                 _ => "-1",
-            }
-            .to_string())
+            })
         }
     }
 }

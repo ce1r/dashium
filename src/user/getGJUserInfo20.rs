@@ -1,6 +1,7 @@
 use crate::Database;
 use crate::Result;
 use crate::gd_format;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::get_user_by_id;
 use cornucopia::types::CommentSetting;
@@ -13,7 +14,7 @@ pub struct Data {
     targetAccountID: i32,
 }
 
-pub async fn getGJUserInfo20(Form(form): Form<Data>) -> Result<String> {
+pub async fn getGJUserInfo20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
 
     let user = get_user_by_id()

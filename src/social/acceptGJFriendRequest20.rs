@@ -1,6 +1,7 @@
 use crate::Database;
 use crate::Result;
 use crate::util::verify_gjp2;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use cornucopia::queries::social::accept_friend_request;
 use serde::Deserialize;
@@ -12,7 +13,7 @@ pub struct Data {
     targetAccountID: i32,
 }
 
-pub async fn acceptGJFriendRequest20(Form(form): Form<Data>) -> Result<String> {
+pub async fn acceptGJFriendRequest20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
     verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
@@ -20,5 +21,5 @@ pub async fn acceptGJFriendRequest20(Form(form): Form<Data>) -> Result<String> {
         .bind(&client, &form.accountID, &form.targetAccountID)
         .await?;
 
-    Ok("1".to_string())
+    Ok("1")
 }

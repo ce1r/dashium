@@ -10,3 +10,15 @@ derive-traits = ["serde::Serialize"]
 
 [types.custom.comment_setting]
 derive-traits = ["serde::Serialize"]
+
+[types.custom.visibility]
+derive-traits = ["serde::Serialize"]
+
+[types.custom.level_length]
+derive-traits = ["serde::Serialize"]
+
+[types.custom.difficulty]
+derive-traits = ["serde::Serialize"]
+
+[types.custom.demon_difficulty]
+derive-traits = ["serde::Serialize"]

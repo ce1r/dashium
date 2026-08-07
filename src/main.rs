@@ -1,13 +1,14 @@
 #![forbid(unsafe_code)]
 
 use dashium::Database;
+use dashium::Result;
 use dotenvy::dotenv;
 use tokio::net::TcpListener;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() -> Result<()> {
     dotenv().ok();
 
     tracing_subscriber::registry()

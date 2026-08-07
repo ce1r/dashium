@@ -84,3 +84,10 @@ CREATE TABLE levels (
     featured_at TIMESTAMPTZ DEFAULT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE VIEW level_view AS
+SELECT
+    levels.*,
+    users.username
+FROM levels
+JOIN users ON levels.user_id = users.id;

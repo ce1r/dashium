@@ -1,6 +1,8 @@
 use crate::Database;
 use crate::Result;
+use crate::error::AppError;
 use crate::util::verify_gjp2;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
@@ -20,17 +22,14 @@ pub struct Data {
     saveData: String,
 }
 
-pub async fn backupGJAccountNew(Form(form): Form<Data>) -> Result<String> {
+pub async fn backupGJAccountNew(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
     let hash: [u8; 32] = verify_gjp2(&client, form.accountID, &form.gjp2)
         .await?
         .try_into()
         .unwrap_or_default();
 
-    let (user_data, user_levels) = form
-        .saveData
-        .split_once(';')
-        .ok_or_else(|| anyhow::anyhow!(""))?;
+    let (user_data, user_levels) = form.saveData.split_once(';').ok_or(AppError::Unhandled)?;
 
     let user_data = URL_SAFE.decode(user_data)?;
     let user_levels = URL_SAFE.decode(user_levels)?;
@@ -48,5 +47,5 @@ pub async fn backupGJAccountNew(Form(form): Form<Data>) -> Result<String> {
     file1.write_all(&ciphertext).await?;
     file2.write_all(&user_levels).await?;
 
-    Ok("1".to_string())
+    Ok("1")
 }

@@ -1,17 +1,17 @@
 use crate::Database;
+use crate::Result;
 use axum::Json;
 use axum::extract::Path;
 use axum::response::IntoResponse;
 use cornucopia::queries::user::get_user_by_username;
 
-pub async fn get_user(Path(username): Path<String>) -> impl IntoResponse {
-    let client = Database::acquire().await.unwrap();
+pub async fn get(Path(username): Path<String>) -> Result<impl IntoResponse> {
+    let client = Database::acquire().await?;
 
     let user = get_user_by_username()
         .bind(&client, &username)
         .one()
-        .await
-        .unwrap();
+        .await?;
 
-    Json(user)
+    Ok(Json(user))
 }

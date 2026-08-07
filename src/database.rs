@@ -1,9 +1,8 @@
-use anyhow::Error;
-use anyhow::Result;
+use crate::Result;
+use crate::error::AppError;
 use cornucopia::deadpool_postgres::Config;
 use cornucopia::deadpool_postgres::Object;
 use cornucopia::deadpool_postgres::Pool;
-use cornucopia::deadpool_postgres::PoolError;
 use cornucopia::deadpool_postgres::Runtime;
 use cornucopia::tokio_postgres::NoTls;
 use std::env;
@@ -23,15 +22,15 @@ impl Database {
 
             let pool = cfg.create_pool(Some(Runtime::Tokio1), NoTls)?;
 
-            Ok::<Pool, Error>(pool)
+            Ok::<Pool, AppError>(pool)
         })
         .await?;
 
         Ok(())
     }
 
-    pub async fn acquire() -> Result<Object, PoolError> {
-        let pool = POOL.get().expect("Database::init must be called first");
+    pub async fn acquire() -> Result<Object> {
+        let pool = POOL.get().ok_or(AppError::Unhandled)?;
         let client = pool.get().await?;
 
         Ok(client)

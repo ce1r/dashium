@@ -3,6 +3,7 @@ use crate::Result;
 use crate::util::cyclic_xor;
 use crate::util::salt_and_sha1;
 use crate::util::seconds_until_midnight;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
@@ -19,7 +20,7 @@ pub struct Data {
     udid: String,
 }
 
-pub async fn getGJChallenges(Form(form): Form<Data>) -> Result<String> {
+pub async fn getGJChallenges(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
     let mut chk = URL_SAFE.decode(&form.chk[5..])?;
     cyclic_xor(&mut chk, QUEST_XOR_KEY);

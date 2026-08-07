@@ -2,6 +2,7 @@ use crate::Database;
 use crate::Result;
 use crate::util::cyclic_xor;
 use crate::util::verify_gjp2;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
@@ -19,7 +20,7 @@ pub struct Data {
     body: String,
 }
 
-pub async fn uploadGJMessage20(Form(form): Form<Data>) -> Result<String> {
+pub async fn uploadGJMessage20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let subject = String::from_utf8(URL_SAFE.decode(&form.subject)?)?;
     let mut body = URL_SAFE.decode(&form.body)?;
     cyclic_xor(&mut body, MESSAGE_XOR_KEY);
@@ -32,5 +33,5 @@ pub async fn uploadGJMessage20(Form(form): Form<Data>) -> Result<String> {
         .bind(&client, &form.accountID, &form.toAccountID, &subject, &body)
         .await?;
 
-    Ok("1".to_string())
+    Ok("1")
 }

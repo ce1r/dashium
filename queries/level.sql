@@ -1,4 +1,4 @@
---: Level (featured_at?)
+--: Level (featured_at?) : serde::Serialize
 
 --! create_level
 INSERT INTO levels (
@@ -51,18 +51,12 @@ WHERE users.id = :user_id
 RETURNING id;
 
 --! search_levels : Level
-SELECT
-    levels.*,
-    users.username
-FROM levels
-JOIN users ON levels.user_id = users.id
-WHERE levels.name ILIKE '%' || :search || '%'
+SELECT *
+FROM level_view
+WHERE name ILIKE '%' || :search || '%'
 LIMIT 10 OFFSET :offset;
 
 --! get_level : Level
-SELECT
-    levels.*,
-    users.username
-FROM levels
-JOIN users ON levels.user_id = users.id
-WHERE levels.id = :level_id;
+SELECT *
+FROM level_view
+WHERE id = :level_id;

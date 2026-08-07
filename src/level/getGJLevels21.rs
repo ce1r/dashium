@@ -2,6 +2,7 @@ use crate::Database;
 use crate::Result;
 use crate::gd_format;
 use crate::util::salt_and_sha1;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use cornucopia::queries::level::Level;
 use cornucopia::queries::level::search_levels;
@@ -16,7 +17,7 @@ pub struct Data {
     page: i64,
 }
 
-pub async fn getGJLevels21(Form(form): Form<Data>) -> Result<String> {
+pub async fn getGJLevels21(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
     let offset = form.page * 10;
 

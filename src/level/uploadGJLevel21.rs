@@ -1,6 +1,7 @@
 use crate::Database;
 use crate::Result;
 use crate::util::verify_gjp2;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
@@ -45,7 +46,7 @@ pub struct Data {
     unlisted: u8,
 }
 
-pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<String> {
+pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
     verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 

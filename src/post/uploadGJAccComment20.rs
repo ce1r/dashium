@@ -1,6 +1,7 @@
 use crate::Database;
 use crate::Result;
 use crate::util::verify_gjp2;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
@@ -14,7 +15,7 @@ pub struct Data {
     gjp2: String,
 }
 
-pub async fn uploadGJAccComment20(Form(form): Form<Data>) -> Result<String> {
+pub async fn uploadGJAccComment20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let decoded = URL_SAFE.decode(&form.comment)?;
     let body = String::from_utf8(decoded)?;
 

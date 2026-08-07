@@ -1,5 +1,6 @@
 use crate::Database;
 use crate::Result;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use cornucopia::queries::user::login_user;
 use serde::Deserialize;
@@ -14,7 +15,7 @@ pub struct Data {
     udid: String,
 }
 
-pub async fn loginGJAccount(Form(form): Form<Data>) -> Result<String> {
+pub async fn loginGJAccount(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
 
     let auth = login_user()

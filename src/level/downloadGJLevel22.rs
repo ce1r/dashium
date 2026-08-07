@@ -2,6 +2,7 @@ use crate::Database;
 use crate::Result;
 use crate::gd_format;
 use crate::util::salt_and_sha1;
+use axum::response::IntoResponse;
 use axum_extra::extract::Form;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE;
@@ -18,7 +19,7 @@ pub struct Data {
     levelID: i32,
 }
 
-pub async fn downloadGJLevel22(Form(form): Form<Data>) -> Result<String> {
+pub async fn downloadGJLevel22(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
 
     let level = get_level().bind(&client, &form.levelID).one().await?;
