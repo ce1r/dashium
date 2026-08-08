@@ -23,6 +23,11 @@ pub struct SearchLevelsParams<T1: crate::StringSql> {
     pub search: T1,
     pub offset: i64,
 }
+#[derive(Clone, Copy, Debug)]
+pub struct DeleteLevelParams {
+    pub level_id: i32,
+    pub user_id: i32,
+}
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Level {
     pub id: i32,
@@ -689,5 +694,48 @@ impl GetLevelCountStmt {
             extractor: |row| Ok(row.try_get(0)?),
             mapper: |it| it,
         }
+    }
+}
+pub struct DeleteLevelStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn delete_level() -> DeleteLevelStmt {
+    DeleteLevelStmt("DELETE FROM levels WHERE id = $1 AND user_id = $2", None)
+}
+impl DeleteLevelStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub async fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        level_id: &'a i32,
+        user_id: &'a i32,
+    ) -> Result<u64, tokio_postgres::Error> {
+        client.execute(self.0, &[level_id, user_id]).await
+    }
+}
+impl<'a, C: GenericClient + Send + Sync>
+    crate::client::async_::Params<
+        'a,
+        'a,
+        'a,
+        DeleteLevelParams,
+        std::pin::Pin<
+            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+        >,
+        C,
+    > for DeleteLevelStmt
+{
+    fn params(
+        &'a self,
+        client: &'a C,
+        params: &'a DeleteLevelParams,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+    > {
+        Box::pin(self.bind(client, &params.level_id, &params.user_id))
     }
 }

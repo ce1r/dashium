@@ -1,3 +1,5 @@
+--: Post () : serde::Serialize
+
 --! create_post
 INSERT INTO posts (
     user_id,
@@ -10,7 +12,7 @@ FROM users
 WHERE id = :user_id
 RETURNING id;
 
---! get_posts
+--! get_posts : Post
 SELECT *
 FROM posts
 WHERE user_id = :user_id

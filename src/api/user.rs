@@ -4,6 +4,7 @@ use axum::Json;
 use axum::extract::Path;
 use axum::response::IntoResponse;
 use cornucopia::queries::level::get_levels_of_user;
+use cornucopia::queries::post::get_posts;
 use cornucopia::queries::user::get_user_by_id;
 use cornucopia::queries::user::get_user_count;
 
@@ -29,4 +30,12 @@ pub async fn count() -> Result<impl IntoResponse> {
     let count = get_user_count().bind(&client).one().await?;
 
     Ok(Json(count))
+}
+
+pub async fn posts(Path(user_id): Path<i32>) -> Result<impl IntoResponse> {
+    let client = Database::acquire().await?;
+
+    let posts = get_posts().bind(&client, &user_id, &0).all().await?;
+
+    Ok(Json(posts))
 }

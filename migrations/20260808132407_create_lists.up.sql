@@ -1,0 +1,21 @@
+CREATE TABLE lists (
+    id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name VARCHAR(25) NOT NULL,
+    description VARCHAR(300) NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    downloads INTEGER NOT NULL DEFAULT 0,
+    likes INTEGER NOT NULL DEFAULT 0,
+    difficulty SMALLINT NOT NULL,
+    rated BOOLEAN NOT NULL DEFAULT FALSE,
+    levels INTEGER[] NOT NULL,
+    reward INTEGER NOT NULL DEFAULT 0,
+    requirement INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE VIEW list_view AS
+SELECT
+    l.*,
+    u.username
+FROM lists l
+JOIN users u ON l.user_id = u.id;

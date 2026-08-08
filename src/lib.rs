@@ -10,6 +10,7 @@ mod comment;
 mod database;
 mod error;
 mod level;
+mod list;
 mod post;
 mod reward;
 mod social;
@@ -34,6 +35,7 @@ pub fn gd_routes() -> Router {
         .merge(reward::routes())
         .merge(social::routes())
         .merge(comment::routes())
+        .merge(list::routes())
 }
 
 #[macro_export]

@@ -2,6 +2,7 @@
 
 pub mod comment;
 pub mod level;
+pub mod list;
 pub mod post;
 pub mod reward;
 pub mod social;

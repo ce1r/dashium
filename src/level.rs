@@ -1,6 +1,7 @@
 use axum::Router;
 use axum::routing::post;
 
+mod deleteGJLevelUser20;
 mod downloadGJLevel22;
 mod getGJLevels21;
 mod uploadGJLevel21;
@@ -15,5 +16,9 @@ pub fn routes() -> Router {
         .route(
             "/downloadGJLevel22.php",
             post(downloadGJLevel22::downloadGJLevel22),
+        )
+        .route(
+            "/deleteGJLevelUser20.php",
+            post(deleteGJLevelUser20::deleteGJLevelUser20),
         )
 }

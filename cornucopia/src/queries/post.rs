@@ -15,30 +15,30 @@ pub struct DeletePostParams {
     pub post_id: i32,
     pub user_id: i32,
 }
-#[derive(Debug, Clone, PartialEq)]
-pub struct GetPosts {
+#[derive(Debug, Clone, PartialEq, serde::Serialize)]
+pub struct Post {
     pub id: i32,
     pub user_id: i32,
     pub body: String,
     pub likes: i32,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }
-pub struct GetPostsBorrowed<'a> {
+pub struct PostBorrowed<'a> {
     pub id: i32,
     pub user_id: i32,
     pub body: &'a str,
     pub likes: i32,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
 }
-impl<'a> From<GetPostsBorrowed<'a>> for GetPosts {
+impl<'a> From<PostBorrowed<'a>> for Post {
     fn from(
-        GetPostsBorrowed {
+        PostBorrowed {
             id,
             user_id,
             body,
             likes,
             created_at,
-        }: GetPostsBorrowed<'a>,
+        }: PostBorrowed<'a>,
     ) -> Self {
         Self {
             id,
@@ -115,20 +115,20 @@ where
         Ok(mapped)
     }
 }
-pub struct GetPostsQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+pub struct PostQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
     client: &'c C,
     params: [&'a (dyn postgres_types::ToSql + Sync); N],
     query: &'static str,
     cached: Option<&'s tokio_postgres::Statement>,
-    extractor: fn(&tokio_postgres::Row) -> Result<GetPostsBorrowed, tokio_postgres::Error>,
-    mapper: fn(GetPostsBorrowed) -> T,
+    extractor: fn(&tokio_postgres::Row) -> Result<PostBorrowed, tokio_postgres::Error>,
+    mapper: fn(PostBorrowed) -> T,
 }
-impl<'c, 'a, 's, C, T: 'c, const N: usize> GetPostsQuery<'c, 'a, 's, C, T, N>
+impl<'c, 'a, 's, C, T: 'c, const N: usize> PostQuery<'c, 'a, 's, C, T, N>
 where
     C: GenericClient,
 {
-    pub fn map<R>(self, mapper: fn(GetPostsBorrowed) -> R) -> GetPostsQuery<'c, 'a, 's, C, R, N> {
-        GetPostsQuery {
+    pub fn map<R>(self, mapper: fn(PostBorrowed) -> R) -> PostQuery<'c, 'a, 's, C, R, N> {
+        PostQuery {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -248,41 +248,34 @@ impl GetPostsStmt {
         client: &'c C,
         user_id: &'a i32,
         offset: &'a i64,
-    ) -> GetPostsQuery<'c, 'a, 's, C, GetPosts, 2> {
-        GetPostsQuery {
+    ) -> PostQuery<'c, 'a, 's, C, Post, 2> {
+        PostQuery {
             client,
             params: [user_id, offset],
             query: self.0,
             cached: self.1.as_ref(),
-            extractor:
-                |row: &tokio_postgres::Row| -> Result<GetPostsBorrowed, tokio_postgres::Error> {
-                    Ok(GetPostsBorrowed {
-                        id: row.try_get(0)?,
-                        user_id: row.try_get(1)?,
-                        body: row.try_get(2)?,
-                        likes: row.try_get(3)?,
-                        created_at: row.try_get(4)?,
-                    })
-                },
-            mapper: |it| GetPosts::from(it),
+            extractor: |row: &tokio_postgres::Row| -> Result<PostBorrowed, tokio_postgres::Error> {
+                Ok(PostBorrowed {
+                    id: row.try_get(0)?,
+                    user_id: row.try_get(1)?,
+                    body: row.try_get(2)?,
+                    likes: row.try_get(3)?,
+                    created_at: row.try_get(4)?,
+                })
+            },
+            mapper: |it| Post::from(it),
         }
     }
 }
 impl<'c, 'a, 's, C: GenericClient>
-    crate::client::async_::Params<
-        'c,
-        'a,
-        's,
-        GetPostsParams,
-        GetPostsQuery<'c, 'a, 's, C, GetPosts, 2>,
-        C,
-    > for GetPostsStmt
+    crate::client::async_::Params<'c, 'a, 's, GetPostsParams, PostQuery<'c, 'a, 's, C, Post, 2>, C>
+    for GetPostsStmt
 {
     fn params(
         &'s self,
         client: &'c C,
         params: &'a GetPostsParams,
-    ) -> GetPostsQuery<'c, 'a, 's, C, GetPosts, 2> {
+    ) -> PostQuery<'c, 'a, 's, C, Post, 2> {
         self.bind(client, &params.user_id, &params.offset)
     }
 }

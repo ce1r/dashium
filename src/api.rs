@@ -9,6 +9,7 @@ pub fn routes() -> Router {
         .route("/users/{user_id}", get(user::get))
         .route("/users/count", get(user::count))
         .route("/users/{user_id}/levels", get(user::get_levels))
+        .route("/users/{user_id}/posts", get(user::posts))
         .route("/levels/{level_id}", get(level::get))
         .route("/levels/count", get(level::count))
 }
