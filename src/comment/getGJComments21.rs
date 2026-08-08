@@ -8,7 +8,7 @@ use base64::engine::general_purpose::URL_SAFE;
 use chrono_humanize::HumanTime;
 use cornucopia::queries::comment::get_comments_by_date;
 use cornucopia::queries::comment::get_comments_by_likes;
-use cornucopia::types::ModLevel;
+use cornucopia::types::Role;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -51,11 +51,11 @@ pub async fn getGJComments21(Form(form): Form<Data>) -> Result<impl IntoResponse
             let created_at = HumanTime::from(c.created_at)
                 .to_string()
                 .replace(" ago", "");
-            let mod_level = match c.mod_level {
-                ModLevel::None => 0,
-                ModLevel::Moderator => 1,
-                ModLevel::ElderModerator => 2,
-                ModLevel::LeaderboardModerator => 3,
+            let mod_level = match c.role {
+                Role::User => 0,
+                Role::Moderator => 1,
+                Role::ElderModerator | Role::Administrator => 2,
+                Role::LeaderboardModerator => 3,
             };
 
             let comment = gd_format!(

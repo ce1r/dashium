@@ -12,18 +12,18 @@ CREATE TABLE friend_requests (
 
 CREATE VIEW friend_request_view AS
 SELECT
-    friend_requests.id,
-    friend_requests.user_id,
-    friend_requests.target_id,
-    friend_requests.body,
-    friend_requests.is_new,
-    friend_requests.created_at,
-    users.username,
-    users.color1,
-    users.color2,
-    users.color3,
-    users.icon,
-    users.icon_type,
-    users.glow
-FROM friend_requests
-JOIN users ON users.id = friend_requests.user_id;
+    fr.id,
+    fr.user_id,
+    fr.target_id,
+    fr.body,
+    fr.is_new,
+    fr.created_at,
+    u.username,
+    u.color1,
+    u.color2,
+    u.color3,
+    u.icon,
+    u.icon_type,
+    u.glow
+FROM friend_requests fr
+JOIN users u ON u.id = fr.user_id;

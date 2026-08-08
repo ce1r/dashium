@@ -6,7 +6,7 @@ use axum_extra::extract::Form;
 use cornucopia::queries::user::get_user_by_id;
 use cornucopia::types::CommentSetting;
 use cornucopia::types::MessageSetting;
-use cornucopia::types::ModLevel;
+use cornucopia::types::Role;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -22,11 +22,11 @@ pub async fn getGJUserInfo20(Form(form): Form<Data>) -> Result<impl IntoResponse
         .one()
         .await?;
 
-    let mod_level = match user.mod_level {
-        ModLevel::None => 0,
-        ModLevel::Moderator => 1,
-        ModLevel::ElderModerator => 2,
-        ModLevel::LeaderboardModerator => 3,
+    let mod_level = match user.role {
+        Role::User => 0,
+        Role::Moderator => 1,
+        Role::ElderModerator | Role::Administrator => 2,
+        Role::LeaderboardModerator => 3,
     };
 
     let message_setting = match user.message_setting {

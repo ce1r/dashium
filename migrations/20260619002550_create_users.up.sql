@@ -1,9 +1,10 @@
-DROP TYPE IF EXISTS mod_level;
-CREATE TYPE mod_level AS ENUM (
-    'None',
+DROP TYPE IF EXISTS role;
+CREATE TYPE role AS ENUM (
+    'User',
     'Moderator',
     'ElderModerator',
-    'LeaderboardModerator'
+    'LeaderboardModerator',
+    'Administrator'
 );
 
 DROP TYPE IF EXISTS message_setting;
@@ -27,7 +28,7 @@ CREATE TABLE users (
     hash BYTEA NOT NULL,
     salt BYTEA NOT NULL,
     is_activated BOOLEAN NOT NULL DEFAULT TRUE,
-    mod_level mod_level NOT NULL DEFAULT 'None',
+    role role NOT NULL DEFAULT 'User',
     udid TEXT NOT NULL DEFAULT '',
 
     stars INTEGER NOT NULL DEFAULT 0,
@@ -74,7 +75,7 @@ CREATE VIEW user_view AS
 SELECT 
     id,
     username,
-    mod_level,
+    role,
     stars,
     demons,
     creator_points,

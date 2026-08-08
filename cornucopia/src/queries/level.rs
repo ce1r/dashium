@@ -34,29 +34,29 @@ pub struct Level {
     pub length: crate::types::LevelLength,
     pub objects: i32,
     pub requested_stars: i16,
-    pub stars: i16,
     pub coins: i16,
     pub likes: i32,
     pub dislikes: i32,
     pub downloads: i32,
-    pub difficulty: crate::types::Difficulty,
-    pub demon_difficulty: crate::types::DemonDifficulty,
-    pub is_rated: bool,
-    pub is_featured: bool,
-    pub feature_score: i32,
-    pub is_auto: bool,
     pub is_ldm: bool,
     pub is_two_player: bool,
     pub is_platformer: bool,
-    pub is_gauntlet: bool,
-    pub is_demon: bool,
-    pub has_verified_coins: bool,
     pub official_song_id: i32,
     pub song_id: i32,
     pub visibility: crate::types::Visibility,
-    pub featured_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub username: String,
+    pub rating: Option<crate::types::Rating>,
+    pub stars: i32,
+    pub difficulty: crate::types::Difficulty,
+    pub demon_difficulty: Option<crate::types::DemonDifficulty>,
+    pub has_verified_coins: bool,
+    pub is_auto: bool,
+    pub is_demon: bool,
+    pub is_featured: bool,
+    pub is_rated: bool,
+    pub rated_by: Option<i32>,
+    pub rated_at: Option<chrono::DateTime<chrono::FixedOffset>>,
 }
 pub struct LevelBorrowed<'a> {
     pub id: i32,
@@ -68,29 +68,29 @@ pub struct LevelBorrowed<'a> {
     pub length: crate::types::LevelLength,
     pub objects: i32,
     pub requested_stars: i16,
-    pub stars: i16,
     pub coins: i16,
     pub likes: i32,
     pub dislikes: i32,
     pub downloads: i32,
-    pub difficulty: crate::types::Difficulty,
-    pub demon_difficulty: crate::types::DemonDifficulty,
-    pub is_rated: bool,
-    pub is_featured: bool,
-    pub feature_score: i32,
-    pub is_auto: bool,
     pub is_ldm: bool,
     pub is_two_player: bool,
     pub is_platformer: bool,
-    pub is_gauntlet: bool,
-    pub is_demon: bool,
-    pub has_verified_coins: bool,
     pub official_song_id: i32,
     pub song_id: i32,
     pub visibility: crate::types::Visibility,
-    pub featured_at: Option<chrono::DateTime<chrono::FixedOffset>>,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
     pub username: &'a str,
+    pub rating: Option<crate::types::Rating>,
+    pub stars: i32,
+    pub difficulty: crate::types::Difficulty,
+    pub demon_difficulty: Option<crate::types::DemonDifficulty>,
+    pub has_verified_coins: bool,
+    pub is_auto: bool,
+    pub is_demon: bool,
+    pub is_featured: bool,
+    pub is_rated: bool,
+    pub rated_by: Option<i32>,
+    pub rated_at: Option<chrono::DateTime<chrono::FixedOffset>>,
 }
 impl<'a> From<LevelBorrowed<'a>> for Level {
     fn from(
@@ -104,29 +104,29 @@ impl<'a> From<LevelBorrowed<'a>> for Level {
             length,
             objects,
             requested_stars,
-            stars,
             coins,
             likes,
             dislikes,
             downloads,
-            difficulty,
-            demon_difficulty,
-            is_rated,
-            is_featured,
-            feature_score,
-            is_auto,
             is_ldm,
             is_two_player,
             is_platformer,
-            is_gauntlet,
-            is_demon,
-            has_verified_coins,
             official_song_id,
             song_id,
             visibility,
-            featured_at,
             created_at,
             username,
+            rating,
+            stars,
+            difficulty,
+            demon_difficulty,
+            has_verified_coins,
+            is_auto,
+            is_demon,
+            is_featured,
+            is_rated,
+            rated_by,
+            rated_at,
         }: LevelBorrowed<'a>,
     ) -> Self {
         Self {
@@ -139,29 +139,29 @@ impl<'a> From<LevelBorrowed<'a>> for Level {
             length,
             objects,
             requested_stars,
-            stars,
             coins,
             likes,
             dislikes,
             downloads,
-            difficulty,
-            demon_difficulty,
-            is_rated,
-            is_featured,
-            feature_score,
-            is_auto,
             is_ldm,
             is_two_player,
             is_platformer,
-            is_gauntlet,
-            is_demon,
-            has_verified_coins,
             official_song_id,
             song_id,
             visibility,
-            featured_at,
             created_at,
             username: username.into(),
+            rating,
+            stars,
+            difficulty,
+            demon_difficulty,
+            has_verified_coins,
+            is_auto,
+            is_demon,
+            is_featured,
+            is_rated,
+            rated_by,
+            rated_at,
         }
     }
 }
@@ -245,6 +245,70 @@ where
 {
     pub fn map<R>(self, mapper: fn(LevelBorrowed) -> R) -> LevelQuery<'c, 'a, 's, C, R, N> {
         LevelQuery {
+            client: self.client,
+            params: self.params,
+            query: self.query,
+            cached: self.cached,
+            extractor: self.extractor,
+            mapper,
+        }
+    }
+    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
+        let row =
+            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
+        Ok((self.mapper)((self.extractor)(&row)?))
+    }
+    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
+        self.iter().await?.try_collect().await
+    }
+    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
+        let opt_row =
+            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
+        Ok(opt_row
+            .map(|row| {
+                let extracted = (self.extractor)(&row)?;
+                Ok((self.mapper)(extracted))
+            })
+            .transpose()?)
+    }
+    pub async fn iter(
+        self,
+    ) -> Result<
+        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
+        tokio_postgres::Error,
+    > {
+        let stream = crate::client::async_::raw(
+            self.client,
+            self.query,
+            crate::slice_iter(&self.params),
+            self.cached,
+        )
+        .await?;
+        let mapped = stream
+            .map(move |res| {
+                res.and_then(|row| {
+                    let extracted = (self.extractor)(&row)?;
+                    Ok((self.mapper)(extracted))
+                })
+            })
+            .into_stream();
+        Ok(mapped)
+    }
+}
+pub struct I64Query<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+    client: &'c C,
+    params: [&'a (dyn postgres_types::ToSql + Sync); N],
+    query: &'static str,
+    cached: Option<&'s tokio_postgres::Statement>,
+    extractor: fn(&tokio_postgres::Row) -> Result<i64, tokio_postgres::Error>,
+    mapper: fn(i64) -> T,
+}
+impl<'c, 'a, 's, C, T: 'c, const N: usize> I64Query<'c, 'a, 's, C, T, N>
+where
+    C: GenericClient,
+{
+    pub fn map<R>(self, mapper: fn(i64) -> R) -> I64Query<'c, 'a, 's, C, R, N> {
+        I64Query {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -427,29 +491,29 @@ impl SearchLevelsStmt {
                     length: row.try_get(6)?,
                     objects: row.try_get(7)?,
                     requested_stars: row.try_get(8)?,
-                    stars: row.try_get(9)?,
-                    coins: row.try_get(10)?,
-                    likes: row.try_get(11)?,
-                    dislikes: row.try_get(12)?,
-                    downloads: row.try_get(13)?,
-                    difficulty: row.try_get(14)?,
-                    demon_difficulty: row.try_get(15)?,
-                    is_rated: row.try_get(16)?,
-                    is_featured: row.try_get(17)?,
-                    feature_score: row.try_get(18)?,
-                    is_auto: row.try_get(19)?,
-                    is_ldm: row.try_get(20)?,
-                    is_two_player: row.try_get(21)?,
-                    is_platformer: row.try_get(22)?,
-                    is_gauntlet: row.try_get(23)?,
-                    is_demon: row.try_get(24)?,
+                    coins: row.try_get(9)?,
+                    likes: row.try_get(10)?,
+                    dislikes: row.try_get(11)?,
+                    downloads: row.try_get(12)?,
+                    is_ldm: row.try_get(13)?,
+                    is_two_player: row.try_get(14)?,
+                    is_platformer: row.try_get(15)?,
+                    official_song_id: row.try_get(16)?,
+                    song_id: row.try_get(17)?,
+                    visibility: row.try_get(18)?,
+                    created_at: row.try_get(19)?,
+                    username: row.try_get(20)?,
+                    rating: row.try_get(21)?,
+                    stars: row.try_get(22)?,
+                    difficulty: row.try_get(23)?,
+                    demon_difficulty: row.try_get(24)?,
                     has_verified_coins: row.try_get(25)?,
-                    official_song_id: row.try_get(26)?,
-                    song_id: row.try_get(27)?,
-                    visibility: row.try_get(28)?,
-                    featured_at: row.try_get(29)?,
-                    created_at: row.try_get(30)?,
-                    username: row.try_get(31)?,
+                    is_auto: row.try_get(26)?,
+                    is_demon: row.try_get(27)?,
+                    is_featured: row.try_get(28)?,
+                    is_rated: row.try_get(29)?,
+                    rated_by: row.try_get(30)?,
+                    rated_at: row.try_get(31)?,
                 })
             },
             mapper: |it| Level::from(it),
@@ -507,29 +571,29 @@ impl GetLevelStmt {
                     length: row.try_get(6)?,
                     objects: row.try_get(7)?,
                     requested_stars: row.try_get(8)?,
-                    stars: row.try_get(9)?,
-                    coins: row.try_get(10)?,
-                    likes: row.try_get(11)?,
-                    dislikes: row.try_get(12)?,
-                    downloads: row.try_get(13)?,
-                    difficulty: row.try_get(14)?,
-                    demon_difficulty: row.try_get(15)?,
-                    is_rated: row.try_get(16)?,
-                    is_featured: row.try_get(17)?,
-                    feature_score: row.try_get(18)?,
-                    is_auto: row.try_get(19)?,
-                    is_ldm: row.try_get(20)?,
-                    is_two_player: row.try_get(21)?,
-                    is_platformer: row.try_get(22)?,
-                    is_gauntlet: row.try_get(23)?,
-                    is_demon: row.try_get(24)?,
+                    coins: row.try_get(9)?,
+                    likes: row.try_get(10)?,
+                    dislikes: row.try_get(11)?,
+                    downloads: row.try_get(12)?,
+                    is_ldm: row.try_get(13)?,
+                    is_two_player: row.try_get(14)?,
+                    is_platformer: row.try_get(15)?,
+                    official_song_id: row.try_get(16)?,
+                    song_id: row.try_get(17)?,
+                    visibility: row.try_get(18)?,
+                    created_at: row.try_get(19)?,
+                    username: row.try_get(20)?,
+                    rating: row.try_get(21)?,
+                    stars: row.try_get(22)?,
+                    difficulty: row.try_get(23)?,
+                    demon_difficulty: row.try_get(24)?,
                     has_verified_coins: row.try_get(25)?,
-                    official_song_id: row.try_get(26)?,
-                    song_id: row.try_get(27)?,
-                    visibility: row.try_get(28)?,
-                    featured_at: row.try_get(29)?,
-                    created_at: row.try_get(30)?,
-                    username: row.try_get(31)?,
+                    is_auto: row.try_get(26)?,
+                    is_demon: row.try_get(27)?,
+                    is_featured: row.try_get(28)?,
+                    is_rated: row.try_get(29)?,
+                    rated_by: row.try_get(30)?,
+                    rated_at: row.try_get(31)?,
                 })
             },
             mapper: |it| Level::from(it),
@@ -539,7 +603,7 @@ impl GetLevelStmt {
 pub struct GetLevelsOfUserStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn get_levels_of_user() -> GetLevelsOfUserStmt {
     GetLevelsOfUserStmt(
-        "SELECT level_view.* FROM level_view JOIN users ON users.id = level_view.user_id WHERE users.username = $1",
+        "SELECT level_view.* FROM level_view WHERE user_id = $1",
         None,
     )
 }
@@ -551,14 +615,14 @@ impl GetLevelsOfUserStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub fn bind<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>(
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
         &'s self,
         client: &'c C,
-        username: &'a T1,
+        user_id: &'a i32,
     ) -> LevelQuery<'c, 'a, 's, C, Level, 1> {
         LevelQuery {
             client,
-            params: [username],
+            params: [user_id],
             query: self.0,
             cached: self.1.as_ref(),
             extractor: |row: &tokio_postgres::Row| -> Result<LevelBorrowed, tokio_postgres::Error> {
@@ -572,32 +636,58 @@ impl GetLevelsOfUserStmt {
                     length: row.try_get(6)?,
                     objects: row.try_get(7)?,
                     requested_stars: row.try_get(8)?,
-                    stars: row.try_get(9)?,
-                    coins: row.try_get(10)?,
-                    likes: row.try_get(11)?,
-                    dislikes: row.try_get(12)?,
-                    downloads: row.try_get(13)?,
-                    difficulty: row.try_get(14)?,
-                    demon_difficulty: row.try_get(15)?,
-                    is_rated: row.try_get(16)?,
-                    is_featured: row.try_get(17)?,
-                    feature_score: row.try_get(18)?,
-                    is_auto: row.try_get(19)?,
-                    is_ldm: row.try_get(20)?,
-                    is_two_player: row.try_get(21)?,
-                    is_platformer: row.try_get(22)?,
-                    is_gauntlet: row.try_get(23)?,
-                    is_demon: row.try_get(24)?,
+                    coins: row.try_get(9)?,
+                    likes: row.try_get(10)?,
+                    dislikes: row.try_get(11)?,
+                    downloads: row.try_get(12)?,
+                    is_ldm: row.try_get(13)?,
+                    is_two_player: row.try_get(14)?,
+                    is_platformer: row.try_get(15)?,
+                    official_song_id: row.try_get(16)?,
+                    song_id: row.try_get(17)?,
+                    visibility: row.try_get(18)?,
+                    created_at: row.try_get(19)?,
+                    username: row.try_get(20)?,
+                    rating: row.try_get(21)?,
+                    stars: row.try_get(22)?,
+                    difficulty: row.try_get(23)?,
+                    demon_difficulty: row.try_get(24)?,
                     has_verified_coins: row.try_get(25)?,
-                    official_song_id: row.try_get(26)?,
-                    song_id: row.try_get(27)?,
-                    visibility: row.try_get(28)?,
-                    featured_at: row.try_get(29)?,
-                    created_at: row.try_get(30)?,
-                    username: row.try_get(31)?,
+                    is_auto: row.try_get(26)?,
+                    is_demon: row.try_get(27)?,
+                    is_featured: row.try_get(28)?,
+                    is_rated: row.try_get(29)?,
+                    rated_by: row.try_get(30)?,
+                    rated_at: row.try_get(31)?,
                 })
             },
             mapper: |it| Level::from(it),
+        }
+    }
+}
+pub struct GetLevelCountStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_level_count() -> GetLevelCountStmt {
+    GetLevelCountStmt("SELECT COUNT(*) FROM levels", None)
+}
+impl GetLevelCountStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+    ) -> I64Query<'c, 'a, 's, C, i64, 0> {
+        I64Query {
+            client,
+            params: [],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |row| Ok(row.try_get(0)?),
+            mapper: |it| it,
         }
     }
 }

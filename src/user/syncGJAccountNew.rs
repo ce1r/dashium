@@ -23,6 +23,7 @@ pub async fn syncGJAccountNew(Form(form): Form<Data>) -> Result<impl IntoRespons
     let client = Database::acquire().await?;
     let hash: [u8; 32] = util::verify_gjp2(&client, form.accountID, &form.gjp2)
         .await?
+        .hash
         .try_into()
         .unwrap_or_default();
 

@@ -1,48 +1,38 @@
---: Level (featured_at?) : serde::Serialize
+--: Level (demon_difficulty?, rated_by?, rated_at?, rating?) : serde::Serialize
 
 --! create_level
 INSERT INTO levels (
     name,
     description,
     user_id,
-
     version,
     original_level_id,
-
     length,
     objects,
     requested_stars,
     coins,
-
     is_ldm,
     is_two_player,
     is_platformer,
-
     official_song_id,
     song_id,
-
     visibility
 )
 SELECT
     :name,
     :description,
     users.id,
-
     :version,
     :original_level_id,
-
     :length,
     :objects,
     :requested_stars,
     :coins,
-
     :is_ldm,
     :is_two_player,
     :is_platformer,
-
     :official_song_id,
     :song_id,
-
     :visibility
 FROM users
 WHERE users.id = :user_id
@@ -62,5 +52,8 @@ WHERE id = :level_id;
 --! get_levels_of_user : Level
 SELECT level_view.*
 FROM level_view
-JOIN users ON users.id = level_view.user_id
-WHERE users.username = :username;
+WHERE user_id = :user_id;
+
+--! get_level_count
+SELECT COUNT(*)
+FROM levels;

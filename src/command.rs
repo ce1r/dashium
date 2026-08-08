@@ -1,5 +1,6 @@
 use crate::Result;
 use bpaf::Bpaf;
+use cornucopia::types::Role;
 
 #[derive(Debug, Clone, Bpaf)]
 #[bpaf(options)]
@@ -9,12 +10,15 @@ pub enum Command {
 }
 
 impl Command {
-    pub async fn execute_command(cmd: Command) -> Result<String> {
+    pub fn execute_command(cmd: Self, role: Role) -> Result<String> {
         match cmd {
-            Command::Ping => {
-                tracing::info!("Ping!");
-                Ok("1".to_string())
-            }
+            Self::Ping => Ok(Self::ping(role)),
         }
+    }
+
+    fn ping(_role: Role) -> String {
+        tracing::info!("Ping!");
+
+        "1".to_string()
     }
 }

@@ -1,9 +1,11 @@
 --: User() : serde::Serialize
+--: Authentication()
 
---! get_hash_and_salt
+--! get_auth : Authentication
 SELECT
     hash,
-    salt
+    salt,
+    role
 FROM users
 WHERE id = :user_id;
 
@@ -56,11 +58,6 @@ SET
 WHERE id = :user_id
 RETURNING id;
 
---! get_mod_level
-SELECT mod_level
-FROM users
-WHERE id = :user_id;
-
 --! update_settings
 UPDATE users
 SET
@@ -96,3 +93,7 @@ FROM user_view
 WHERE username ILIKE '%' || :search || '%'
     AND id != :user_id
 LIMIT 10 OFFSET :offset;
+
+--! get_user_count
+SELECT COUNT(*)
+FROM levels;

@@ -70,19 +70,22 @@ pub struct SearchUsersParams<T1: crate::StringSql> {
     pub offset: i64,
 }
 #[derive(Debug, Clone, PartialEq)]
-pub struct GetHashAndSalt {
+pub struct Authentication {
     pub hash: Vec<u8>,
     pub salt: Vec<u8>,
+    pub role: crate::types::Role,
 }
-pub struct GetHashAndSaltBorrowed<'a> {
+pub struct AuthenticationBorrowed<'a> {
     pub hash: &'a [u8],
     pub salt: &'a [u8],
+    pub role: crate::types::Role,
 }
-impl<'a> From<GetHashAndSaltBorrowed<'a>> for GetHashAndSalt {
-    fn from(GetHashAndSaltBorrowed { hash, salt }: GetHashAndSaltBorrowed<'a>) -> Self {
+impl<'a> From<AuthenticationBorrowed<'a>> for Authentication {
+    fn from(AuthenticationBorrowed { hash, salt, role }: AuthenticationBorrowed<'a>) -> Self {
         Self {
             hash: hash.into(),
             salt: salt.into(),
+            role,
         }
     }
 }
@@ -110,7 +113,7 @@ impl<'a> From<LoginUserBorrowed<'a>> for LoginUser {
 pub struct User {
     pub id: i32,
     pub username: String,
-    pub mod_level: crate::types::ModLevel,
+    pub role: crate::types::Role,
     pub stars: i32,
     pub demons: i32,
     pub creator_points: i32,
@@ -148,7 +151,7 @@ pub struct User {
 pub struct UserBorrowed<'a> {
     pub id: i32,
     pub username: &'a str,
-    pub mod_level: crate::types::ModLevel,
+    pub role: crate::types::Role,
     pub stars: i32,
     pub demons: i32,
     pub creator_points: i32,
@@ -188,7 +191,7 @@ impl<'a> From<UserBorrowed<'a>> for User {
         UserBorrowed {
             id,
             username,
-            mod_level,
+            role,
             stars,
             demons,
             creator_points,
@@ -227,7 +230,7 @@ impl<'a> From<UserBorrowed<'a>> for User {
         Self {
             id,
             username: username.into(),
-            mod_level,
+            role,
             stars,
             demons,
             creator_points,
@@ -266,23 +269,23 @@ impl<'a> From<UserBorrowed<'a>> for User {
 }
 use crate::client::async_::GenericClient;
 use futures::{self, StreamExt, TryStreamExt};
-pub struct GetHashAndSaltQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+pub struct AuthenticationQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
     client: &'c C,
     params: [&'a (dyn postgres_types::ToSql + Sync); N],
     query: &'static str,
     cached: Option<&'s tokio_postgres::Statement>,
-    extractor: fn(&tokio_postgres::Row) -> Result<GetHashAndSaltBorrowed, tokio_postgres::Error>,
-    mapper: fn(GetHashAndSaltBorrowed) -> T,
+    extractor: fn(&tokio_postgres::Row) -> Result<AuthenticationBorrowed, tokio_postgres::Error>,
+    mapper: fn(AuthenticationBorrowed) -> T,
 }
-impl<'c, 'a, 's, C, T: 'c, const N: usize> GetHashAndSaltQuery<'c, 'a, 's, C, T, N>
+impl<'c, 'a, 's, C, T: 'c, const N: usize> AuthenticationQuery<'c, 'a, 's, C, T, N>
 where
     C: GenericClient,
 {
     pub fn map<R>(
         self,
-        mapper: fn(GetHashAndSaltBorrowed) -> R,
-    ) -> GetHashAndSaltQuery<'c, 'a, 's, C, R, N> {
-        GetHashAndSaltQuery {
+        mapper: fn(AuthenticationBorrowed) -> R,
+    ) -> AuthenticationQuery<'c, 'a, 's, C, R, N> {
+        AuthenticationQuery {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -461,73 +464,6 @@ where
         Ok(mapped)
     }
 }
-pub struct ModLevelQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
-    client: &'c C,
-    params: [&'a (dyn postgres_types::ToSql + Sync); N],
-    query: &'static str,
-    cached: Option<&'s tokio_postgres::Statement>,
-    extractor: fn(&tokio_postgres::Row) -> Result<crate::types::ModLevel, tokio_postgres::Error>,
-    mapper: fn(crate::types::ModLevel) -> T,
-}
-impl<'c, 'a, 's, C, T: 'c, const N: usize> ModLevelQuery<'c, 'a, 's, C, T, N>
-where
-    C: GenericClient,
-{
-    pub fn map<R>(
-        self,
-        mapper: fn(crate::types::ModLevel) -> R,
-    ) -> ModLevelQuery<'c, 'a, 's, C, R, N> {
-        ModLevelQuery {
-            client: self.client,
-            params: self.params,
-            query: self.query,
-            cached: self.cached,
-            extractor: self.extractor,
-            mapper,
-        }
-    }
-    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
-        let row =
-            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
-        Ok((self.mapper)((self.extractor)(&row)?))
-    }
-    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
-        self.iter().await?.try_collect().await
-    }
-    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
-        let opt_row =
-            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
-        Ok(opt_row
-            .map(|row| {
-                let extracted = (self.extractor)(&row)?;
-                Ok((self.mapper)(extracted))
-            })
-            .transpose()?)
-    }
-    pub async fn iter(
-        self,
-    ) -> Result<
-        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
-        tokio_postgres::Error,
-    > {
-        let stream = crate::client::async_::raw(
-            self.client,
-            self.query,
-            crate::slice_iter(&self.params),
-            self.cached,
-        )
-        .await?;
-        let mapped = stream
-            .map(move |res| {
-                res.and_then(|row| {
-                    let extracted = (self.extractor)(&row)?;
-                    Ok((self.mapper)(extracted))
-                })
-            })
-            .into_stream();
-        Ok(mapped)
-    }
-}
 pub struct StringQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
     client: &'c C,
     params: [&'a (dyn postgres_types::ToSql + Sync); N],
@@ -656,11 +592,75 @@ where
         Ok(mapped)
     }
 }
-pub struct GetHashAndSaltStmt(&'static str, Option<tokio_postgres::Statement>);
-pub fn get_hash_and_salt() -> GetHashAndSaltStmt {
-    GetHashAndSaltStmt("SELECT hash, salt FROM users WHERE id = $1", None)
+pub struct I64Query<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+    client: &'c C,
+    params: [&'a (dyn postgres_types::ToSql + Sync); N],
+    query: &'static str,
+    cached: Option<&'s tokio_postgres::Statement>,
+    extractor: fn(&tokio_postgres::Row) -> Result<i64, tokio_postgres::Error>,
+    mapper: fn(i64) -> T,
 }
-impl GetHashAndSaltStmt {
+impl<'c, 'a, 's, C, T: 'c, const N: usize> I64Query<'c, 'a, 's, C, T, N>
+where
+    C: GenericClient,
+{
+    pub fn map<R>(self, mapper: fn(i64) -> R) -> I64Query<'c, 'a, 's, C, R, N> {
+        I64Query {
+            client: self.client,
+            params: self.params,
+            query: self.query,
+            cached: self.cached,
+            extractor: self.extractor,
+            mapper,
+        }
+    }
+    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
+        let row =
+            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
+        Ok((self.mapper)((self.extractor)(&row)?))
+    }
+    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
+        self.iter().await?.try_collect().await
+    }
+    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
+        let opt_row =
+            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
+        Ok(opt_row
+            .map(|row| {
+                let extracted = (self.extractor)(&row)?;
+                Ok((self.mapper)(extracted))
+            })
+            .transpose()?)
+    }
+    pub async fn iter(
+        self,
+    ) -> Result<
+        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
+        tokio_postgres::Error,
+    > {
+        let stream = crate::client::async_::raw(
+            self.client,
+            self.query,
+            crate::slice_iter(&self.params),
+            self.cached,
+        )
+        .await?;
+        let mapped = stream
+            .map(move |res| {
+                res.and_then(|row| {
+                    let extracted = (self.extractor)(&row)?;
+                    Ok((self.mapper)(extracted))
+                })
+            })
+            .into_stream();
+        Ok(mapped)
+    }
+}
+pub struct GetAuthStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_auth() -> GetAuthStmt {
+    GetAuthStmt("SELECT hash, salt, role FROM users WHERE id = $1", None)
+}
+impl GetAuthStmt {
     pub async fn prepare<'a, C: GenericClient>(
         mut self,
         client: &'a C,
@@ -672,21 +672,22 @@ impl GetHashAndSaltStmt {
         &'s self,
         client: &'c C,
         user_id: &'a i32,
-    ) -> GetHashAndSaltQuery<'c, 'a, 's, C, GetHashAndSalt, 1> {
-        GetHashAndSaltQuery {
+    ) -> AuthenticationQuery<'c, 'a, 's, C, Authentication, 1> {
+        AuthenticationQuery {
             client,
             params: [user_id],
             query: self.0,
             cached: self.1.as_ref(),
             extractor: |
                 row: &tokio_postgres::Row,
-            | -> Result<GetHashAndSaltBorrowed, tokio_postgres::Error> {
-                Ok(GetHashAndSaltBorrowed {
+            | -> Result<AuthenticationBorrowed, tokio_postgres::Error> {
+                Ok(AuthenticationBorrowed {
                     hash: row.try_get(0)?,
                     salt: row.try_get(1)?,
+                    role: row.try_get(2)?,
                 })
             },
-            mapper: |it| GetHashAndSalt::from(it),
+            mapper: |it| Authentication::from(it),
         }
     }
 }
@@ -929,33 +930,6 @@ impl<'c, 'a, 's, C: GenericClient>
         )
     }
 }
-pub struct GetModLevelStmt(&'static str, Option<tokio_postgres::Statement>);
-pub fn get_mod_level() -> GetModLevelStmt {
-    GetModLevelStmt("SELECT mod_level FROM users WHERE id = $1", None)
-}
-impl GetModLevelStmt {
-    pub async fn prepare<'a, C: GenericClient>(
-        mut self,
-        client: &'a C,
-    ) -> Result<Self, tokio_postgres::Error> {
-        self.1 = Some(client.prepare(self.0).await?);
-        Ok(self)
-    }
-    pub fn bind<'c, 'a, 's, C: GenericClient>(
-        &'s self,
-        client: &'c C,
-        user_id: &'a i32,
-    ) -> ModLevelQuery<'c, 'a, 's, C, crate::types::ModLevel, 1> {
-        ModLevelQuery {
-            client,
-            params: [user_id],
-            query: self.0,
-            cached: self.1.as_ref(),
-            extractor: |row| Ok(row.try_get(0)?),
-            mapper: |it| it,
-        }
-    }
-}
 pub struct UpdateSettingsStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn update_settings() -> UpdateSettingsStmt {
     UpdateSettingsStmt(
@@ -1111,7 +1085,7 @@ impl GetUserByUsernameStmt {
                 Ok(UserBorrowed {
                     id: row.try_get(0)?,
                     username: row.try_get(1)?,
-                    mod_level: row.try_get(2)?,
+                    role: row.try_get(2)?,
                     stars: row.try_get(3)?,
                     demons: row.try_get(4)?,
                     creator_points: row.try_get(5)?,
@@ -1177,7 +1151,7 @@ impl GetUserByIdStmt {
                 Ok(UserBorrowed {
                     id: row.try_get(0)?,
                     username: row.try_get(1)?,
-                    mod_level: row.try_get(2)?,
+                    role: row.try_get(2)?,
                     stars: row.try_get(3)?,
                     demons: row.try_get(4)?,
                     creator_points: row.try_get(5)?,
@@ -1248,7 +1222,7 @@ impl SearchUsersStmt {
                 Ok(UserBorrowed {
                     id: row.try_get(0)?,
                     username: row.try_get(1)?,
-                    mod_level: row.try_get(2)?,
+                    role: row.try_get(2)?,
                     stars: row.try_get(3)?,
                     demons: row.try_get(4)?,
                     creator_points: row.try_get(5)?,
@@ -1304,5 +1278,31 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
         params: &'a SearchUsersParams<T1>,
     ) -> UserQuery<'c, 'a, 's, C, User, 3> {
         self.bind(client, &params.search, &params.user_id, &params.offset)
+    }
+}
+pub struct GetUserCountStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_user_count() -> GetUserCountStmt {
+    GetUserCountStmt("SELECT COUNT(*) FROM levels", None)
+}
+impl GetUserCountStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+    ) -> I64Query<'c, 'a, 's, C, i64, 0> {
+        I64Query {
+            client,
+            params: [],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |row| Ok(row.try_get(0)?),
+            mapper: |it| it,
+        }
     }
 }

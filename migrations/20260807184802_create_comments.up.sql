@@ -12,22 +12,22 @@ CREATE TABLE comments (
 
 CREATE VIEW comment_view AS
 SELECT
-    comments.id,
-    comments.level_id,
-    comments.user_id,
-    comments.body,
-    comments.likes,
-    comments.is_spam,
-    comments.created_at,
-    comments.percent,
-    comments.chat_color,
-    users.username,
-    users.mod_level,
-    users.color1,
-    users.color2,
-    users.color3,
-    users.icon,
-    users.icon_type,
-    users.glow
-FROM comments
-JOIN users ON users.id = comments.user_id;
+    c.id,
+    c.level_id,
+    c.user_id,
+    c.body,
+    c.likes,
+    c.is_spam,
+    c.created_at,
+    c.percent,
+    c.chat_color,
+    u.username,
+    u.role,
+    u.color1,
+    u.color2,
+    u.color3,
+    u.icon,
+    u.icon_type,
+    u.glow
+FROM comments c
+JOIN users u ON u.id = c.user_id;

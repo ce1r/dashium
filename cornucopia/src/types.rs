@@ -1,42 +1,45 @@
 // This file was generated with `cornucopia`. Do not modify.
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 #[allow(non_camel_case_types)]
-pub enum ModLevel {
-    None,
+pub enum Role {
+    User,
     Moderator,
     ElderModerator,
     LeaderboardModerator,
+    Administrator,
 }
-impl<'a> postgres_types::ToSql for ModLevel {
+impl<'a> postgres_types::ToSql for Role {
     fn to_sql(
         &self,
         ty: &postgres_types::Type,
         buf: &mut postgres_types::private::BytesMut,
     ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
         let s = match *self {
-            ModLevel::None => "None",
-            ModLevel::Moderator => "Moderator",
-            ModLevel::ElderModerator => "ElderModerator",
-            ModLevel::LeaderboardModerator => "LeaderboardModerator",
+            Role::User => "User",
+            Role::Moderator => "Moderator",
+            Role::ElderModerator => "ElderModerator",
+            Role::LeaderboardModerator => "LeaderboardModerator",
+            Role::Administrator => "Administrator",
         };
         buf.extend_from_slice(s.as_bytes());
         std::result::Result::Ok(postgres_types::IsNull::No)
     }
     fn accepts(ty: &postgres_types::Type) -> bool {
-        if ty.name() != "mod_level" {
+        if ty.name() != "role" {
             return false;
         }
         match *ty.kind() {
             postgres_types::Kind::Enum(ref variants) => {
-                if variants.len() != 4 {
+                if variants.len() != 5 {
                     return false;
                 }
                 variants.iter().all(|v| match &**v {
-                    "None" => true,
+                    "User" => true,
                     "Moderator" => true,
                     "ElderModerator" => true,
                     "LeaderboardModerator" => true,
+                    "Administrator" => true,
                     _ => false,
                 })
             }
@@ -51,33 +54,35 @@ impl<'a> postgres_types::ToSql for ModLevel {
         postgres_types::__to_sql_checked(self, ty, out)
     }
 }
-impl<'a> postgres_types::FromSql<'a> for ModLevel {
+impl<'a> postgres_types::FromSql<'a> for Role {
     fn from_sql(
         ty: &postgres_types::Type,
         buf: &'a [u8],
-    ) -> Result<ModLevel, Box<dyn std::error::Error + Sync + Send>> {
+    ) -> Result<Role, Box<dyn std::error::Error + Sync + Send>> {
         match std::str::from_utf8(buf)? {
-            "None" => Ok(ModLevel::None),
-            "Moderator" => Ok(ModLevel::Moderator),
-            "ElderModerator" => Ok(ModLevel::ElderModerator),
-            "LeaderboardModerator" => Ok(ModLevel::LeaderboardModerator),
+            "User" => Ok(Role::User),
+            "Moderator" => Ok(Role::Moderator),
+            "ElderModerator" => Ok(Role::ElderModerator),
+            "LeaderboardModerator" => Ok(Role::LeaderboardModerator),
+            "Administrator" => Ok(Role::Administrator),
             s => Result::Err(Into::into(format!("invalid variant `{}`", s))),
         }
     }
     fn accepts(ty: &postgres_types::Type) -> bool {
-        if ty.name() != "mod_level" {
+        if ty.name() != "role" {
             return false;
         }
         match *ty.kind() {
             postgres_types::Kind::Enum(ref variants) => {
-                if variants.len() != 4 {
+                if variants.len() != 5 {
                     return false;
                 }
                 variants.iter().all(|v| match &**v {
-                    "None" => true,
+                    "User" => true,
                     "Moderator" => true,
                     "ElderModerator" => true,
                     "LeaderboardModerator" => true,
+                    "Administrator" => true,
                     _ => false,
                 })
             }
@@ -248,6 +253,96 @@ impl<'a> postgres_types::FromSql<'a> for Visibility {
                     "Public" => true,
                     "FriendsOnly" => true,
                     "Private" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[allow(non_camel_case_types)]
+pub enum Rating {
+    Star,
+    Feature,
+    Epic,
+    Legendary,
+    Mythic,
+}
+impl<'a> postgres_types::ToSql for Rating {
+    fn to_sql(
+        &self,
+        ty: &postgres_types::Type,
+        buf: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        let s = match *self {
+            Rating::Star => "Star",
+            Rating::Feature => "Feature",
+            Rating::Epic => "Epic",
+            Rating::Legendary => "Legendary",
+            Rating::Mythic => "Mythic",
+        };
+        buf.extend_from_slice(s.as_bytes());
+        std::result::Result::Ok(postgres_types::IsNull::No)
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "rating" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 5 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "Star" => true,
+                    "Feature" => true,
+                    "Epic" => true,
+                    "Legendary" => true,
+                    "Mythic" => true,
+                    _ => false,
+                })
+            }
+            _ => false,
+        }
+    }
+    fn to_sql_checked(
+        &self,
+        ty: &postgres_types::Type,
+        out: &mut postgres_types::private::BytesMut,
+    ) -> Result<postgres_types::IsNull, Box<dyn std::error::Error + Sync + Send>> {
+        postgres_types::__to_sql_checked(self, ty, out)
+    }
+}
+impl<'a> postgres_types::FromSql<'a> for Rating {
+    fn from_sql(
+        ty: &postgres_types::Type,
+        buf: &'a [u8],
+    ) -> Result<Rating, Box<dyn std::error::Error + Sync + Send>> {
+        match std::str::from_utf8(buf)? {
+            "Star" => Ok(Rating::Star),
+            "Feature" => Ok(Rating::Feature),
+            "Epic" => Ok(Rating::Epic),
+            "Legendary" => Ok(Rating::Legendary),
+            "Mythic" => Ok(Rating::Mythic),
+            s => Result::Err(Into::into(format!("invalid variant `{}`", s))),
+        }
+    }
+    fn accepts(ty: &postgres_types::Type) -> bool {
+        if ty.name() != "rating" {
+            return false;
+        }
+        match *ty.kind() {
+            postgres_types::Kind::Enum(ref variants) => {
+                if variants.len() != 5 {
+                    return false;
+                }
+                variants.iter().all(|v| match &**v {
+                    "Star" => true,
+                    "Feature" => true,
+                    "Epic" => true,
+                    "Legendary" => true,
+                    "Mythic" => true,
                     _ => false,
                 })
             }

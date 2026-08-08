@@ -2,8 +2,8 @@
 serde = { version = "1.0.229", features = ["derive"] }
 chrono = { version = "0.4.45", features = ["serde"] }
 
-[types.custom.mod_level]
-derive-traits = ["serde::Serialize"]
+[types.custom.role]
+derive-traits = ["PartialOrd", "Ord", "serde::Serialize"]
 
 [types.custom.message_setting]
 derive-traits = ["serde::Serialize"]
@@ -21,4 +21,7 @@ derive-traits = ["serde::Serialize"]
 derive-traits = ["serde::Serialize"]
 
 [types.custom.demon_difficulty]
+derive-traits = ["serde::Serialize"]
+
+[types.custom.rating]
 derive-traits = ["serde::Serialize"]

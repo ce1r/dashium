@@ -12,7 +12,7 @@ CREATE TABLE messages (
 
 CREATE VIEW message_view AS
 SELECT
-    messages.*,
-    users.username
-FROM messages
-JOIN users ON messages.user_id = users.id;
+    m.*,
+    u.username
+FROM messages m
+JOIN users u ON m.user_id = u.id;

@@ -39,11 +39,11 @@ pub async fn downloadGJLevel22(Form(form): Form<Data>) -> Result<impl IntoRespon
     };
 
     let demon_difficulty = match level.demon_difficulty {
-        DemonDifficulty::Easy => 3,
-        DemonDifficulty::Medium => 4,
-        DemonDifficulty::Hard => 0,
-        DemonDifficulty::Insane => 5,
-        DemonDifficulty::Extreme => 6,
+        Some(DemonDifficulty::Easy) => 3,
+        Some(DemonDifficulty::Medium) => 4,
+        Some(DemonDifficulty::Hard) | None => 0,
+        Some(DemonDifficulty::Insane) => 5,
+        Some(DemonDifficulty::Extreme) => 6,
     };
 
     let created_at = HumanTime::from(level.created_at)
@@ -75,7 +75,7 @@ pub async fn downloadGJLevel22(Form(form): Form<Data>) -> Result<impl IntoRespon
         39 => level.requested_stars,
         40 => u8::from(level.is_ldm),
         43 => demon_difficulty,
-        44 => u8::from(level.is_gauntlet),
+        44 => 0,
         45 => level.objects,
         62 => level.created_at.timestamp(),
     );
@@ -113,7 +113,7 @@ pub fn generate_hash2(level: &Level, daily_id: i32) -> String {
         u8::from(level.is_demon),
         level.id,
         u8::from(level.has_verified_coins),
-        level.feature_score,
+        0,
         0,
         daily_id
     );

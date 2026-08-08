@@ -58,11 +58,11 @@ fn level_string(levels: &[Level]) -> String {
             };
 
             let demon_difficulty = match l.demon_difficulty {
-                DemonDifficulty::Easy => 3,
-                DemonDifficulty::Medium => 4,
-                DemonDifficulty::Hard => 0,
-                DemonDifficulty::Insane => 5,
-                DemonDifficulty::Extreme => 6,
+                Some(DemonDifficulty::Easy) => 3,
+                Some(DemonDifficulty::Medium) => 4,
+                Some(DemonDifficulty::Hard) | None => 0,
+                Some(DemonDifficulty::Insane) => 5,
+                Some(DemonDifficulty::Extreme) => 6,
             };
 
             gd_format!(
@@ -83,7 +83,7 @@ fn level_string(levels: &[Level]) -> String {
                 38 => u8::from(l.has_verified_coins),
                 39 => l.requested_stars,
                 43 => demon_difficulty,
-                44 => u8::from(l.is_gauntlet),
+                44 => 0,
                 45 => l.objects,
                 62 => l.created_at.timestamp(),
             )
