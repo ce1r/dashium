@@ -4,12 +4,12 @@
 INSERT INTO comments (
     user_id,
     level_id,
-    comment,
+    body,
     percent
 ) VALUES (
     :user_id,
     :level_id,
-    :comment,
+    :body,
     :percent
 )
 RETURNING id;

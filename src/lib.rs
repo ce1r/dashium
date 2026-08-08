@@ -5,6 +5,7 @@ use axum::Router;
 use tower_http::trace::TraceLayer;
 
 mod api;
+mod command;
 mod comment;
 mod database;
 mod error;

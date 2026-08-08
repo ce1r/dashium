@@ -54,3 +54,9 @@ impl From<deadpool_postgres::CreatePoolError> for AppError {
         Self::Unhandled
     }
 }
+
+impl From<bpaf::ParseFailure> for AppError {
+    fn from(_err: bpaf::ParseFailure) -> Self {
+        Self::Unhandled
+    }
+}

@@ -60,7 +60,7 @@ pub async fn getGJComments21(Form(form): Form<Data>) -> Result<impl IntoResponse
 
             let comment = gd_format!(
                 "~",
-                2 => URL_SAFE.encode(&c.comment),
+                2 => URL_SAFE.encode(&c.body),
                 3 => c.user_id,
                 4 => c.likes,
                 6 => c.id,

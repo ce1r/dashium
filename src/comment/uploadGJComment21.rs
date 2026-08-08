@@ -1,5 +1,7 @@
 use crate::Database;
 use crate::Result;
+use crate::command::Command;
+use crate::command::command;
 use crate::util;
 use axum::response::IntoResponse;
 use axum_extra::extract::Form;
@@ -20,7 +22,7 @@ pub struct Data {
 }
 
 pub async fn uploadGJComment21(Form(form): Form<Data>) -> Result<impl IntoResponse> {
-    let comment = String::from_utf8(URL_SAFE.decode(&form.comment)?)?;
+    let body = String::from_utf8(URL_SAFE.decode(&form.comment)?)?;
     if form.percent < 0 || form.percent > 100 {
         return Ok("-1".to_string());
     }
@@ -28,12 +30,20 @@ pub async fn uploadGJComment21(Form(form): Form<Data>) -> Result<impl IntoRespon
     let client = Database::acquire().await?;
     util::verify_gjp2(&client, form.accountID, &form.gjp2).await?;
 
+    if body.starts_with('/') {
+        let args = shell_words::split(&body[1..].trim()).unwrap_or_default();
+
+        let cmd = command().run_inner(args.as_slice())?;
+
+        return Ok(Command::execute_command(cmd).await?);
+    }
+
     let comment_id = create_comment()
         .bind(
             &client,
             &form.accountID,
             &form.levelID,
-            &comment,
+            &body,
             &form.percent,
         )
         .one()
