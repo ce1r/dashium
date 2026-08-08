@@ -3,30 +3,25 @@ use crate::Result;
 use crate::gd_format;
 use axum::response::IntoResponse;
 use axum_extra::extract::Form;
-use cornucopia::queries::user::search_users;
+use cornucopia::queries::user::get_leaderboard;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct Data {
-    accountID: i32,
-    str: String,
-    page: i64,
+    r#type: String,
+    stat: i16,
 }
 
-pub async fn getGJUsers20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
+pub async fn getGJScores20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
     let client = Database::acquire().await?;
-    let offset = form.page * 10;
 
-    let users = search_users()
-        .bind(&client, &form.str, &form.accountID, &offset)
-        .all()
-        .await?;
+    let stat = if form.r#type == "creators" {
+        4
+    } else {
+        form.stat
+    };
 
-    let count = users.len();
-
-    if count == 0 {
-        return Ok("-2".to_string());
-    }
+    let users = get_leaderboard().bind(&client, &stat).all().await?;
 
     let response = users
         .iter()
@@ -56,5 +51,5 @@ pub async fn getGJUsers20(Form(form): Form<Data>) -> Result<impl IntoResponse> {
         .collect::<Vec<_>>()
         .join("|");
 
-    Ok(format!("{response}#{count}:{offset}:10"))
+    Ok(response)
 }

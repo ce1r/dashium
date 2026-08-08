@@ -147,6 +147,11 @@ pub struct User {
     pub instagram: String,
     pub tiktok: String,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub star_rank: i64,
+    pub creator_rank: i64,
+    pub demon_rank: i64,
+    pub user_coin_rank: i64,
+    pub moon_rank: i64,
 }
 pub struct UserBorrowed<'a> {
     pub id: i32,
@@ -185,6 +190,11 @@ pub struct UserBorrowed<'a> {
     pub instagram: &'a str,
     pub tiktok: &'a str,
     pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub star_rank: i64,
+    pub creator_rank: i64,
+    pub demon_rank: i64,
+    pub user_coin_rank: i64,
+    pub moon_rank: i64,
 }
 impl<'a> From<UserBorrowed<'a>> for User {
     fn from(
@@ -225,6 +235,11 @@ impl<'a> From<UserBorrowed<'a>> for User {
             instagram,
             tiktok,
             created_at,
+            star_rank,
+            creator_rank,
+            demon_rank,
+            user_coin_rank,
+            moon_rank,
         }: UserBorrowed<'a>,
     ) -> Self {
         Self {
@@ -264,6 +279,11 @@ impl<'a> From<UserBorrowed<'a>> for User {
             instagram: instagram.into(),
             tiktok: tiktok.into(),
             created_at,
+            star_rank,
+            creator_rank,
+            demon_rank,
+            user_coin_rank,
+            moon_rank,
         }
     }
 }
@@ -1119,6 +1139,11 @@ impl GetUserByUsernameStmt {
                     instagram: row.try_get(33)?,
                     tiktok: row.try_get(34)?,
                     created_at: row.try_get(35)?,
+                    star_rank: row.try_get(36)?,
+                    creator_rank: row.try_get(37)?,
+                    demon_rank: row.try_get(38)?,
+                    user_coin_rank: row.try_get(39)?,
+                    moon_rank: row.try_get(40)?,
                 })
             },
             mapper: |it| User::from(it),
@@ -1185,6 +1210,11 @@ impl GetUserByIdStmt {
                     instagram: row.try_get(33)?,
                     tiktok: row.try_get(34)?,
                     created_at: row.try_get(35)?,
+                    star_rank: row.try_get(36)?,
+                    creator_rank: row.try_get(37)?,
+                    demon_rank: row.try_get(38)?,
+                    user_coin_rank: row.try_get(39)?,
+                    moon_rank: row.try_get(40)?,
                 })
             },
             mapper: |it| User::from(it),
@@ -1256,6 +1286,11 @@ impl SearchUsersStmt {
                     instagram: row.try_get(33)?,
                     tiktok: row.try_get(34)?,
                     created_at: row.try_get(35)?,
+                    star_rank: row.try_get(36)?,
+                    creator_rank: row.try_get(37)?,
+                    demon_rank: row.try_get(38)?,
+                    user_coin_rank: row.try_get(39)?,
+                    moon_rank: row.try_get(40)?,
                 })
             },
             mapper: |it| User::from(it),
@@ -1303,6 +1338,80 @@ impl GetUserCountStmt {
             cached: self.1.as_ref(),
             extractor: |row| Ok(row.try_get(0)?),
             mapper: |it| it,
+        }
+    }
+}
+pub struct GetLeaderboardStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_leaderboard() -> GetLeaderboardStmt {
+    GetLeaderboardStmt(
+        "SELECT * FROM user_view ORDER BY CASE $1::SMALLINT WHEN 1 THEN moon_rank WHEN 2 THEN demon_rank WHEN 3 THEN user_coin_rank WHEN 4 THEN creator_rank ELSE star_rank END ASC LIMIT 100",
+        None,
+    )
+}
+impl GetLeaderboardStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        stat: &'a i16,
+    ) -> UserQuery<'c, 'a, 's, C, User, 1> {
+        UserQuery {
+            client,
+            params: [stat],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |row: &tokio_postgres::Row| -> Result<UserBorrowed, tokio_postgres::Error> {
+                Ok(UserBorrowed {
+                    id: row.try_get(0)?,
+                    username: row.try_get(1)?,
+                    role: row.try_get(2)?,
+                    stars: row.try_get(3)?,
+                    demons: row.try_get(4)?,
+                    creator_points: row.try_get(5)?,
+                    diamonds: row.try_get(6)?,
+                    moons: row.try_get(7)?,
+                    secret_coins: row.try_get(8)?,
+                    user_coins: row.try_get(9)?,
+                    cube: row.try_get(10)?,
+                    ship: row.try_get(11)?,
+                    ball: row.try_get(12)?,
+                    ufo: row.try_get(13)?,
+                    wave: row.try_get(14)?,
+                    robot: row.try_get(15)?,
+                    spider: row.try_get(16)?,
+                    swing: row.try_get(17)?,
+                    jetpack: row.try_get(18)?,
+                    glow: row.try_get(19)?,
+                    explosion: row.try_get(20)?,
+                    icon: row.try_get(21)?,
+                    icon_type: row.try_get(22)?,
+                    color1: row.try_get(23)?,
+                    color2: row.try_get(24)?,
+                    color3: row.try_get(25)?,
+                    accept_friend_requests: row.try_get(26)?,
+                    message_setting: row.try_get(27)?,
+                    comment_setting: row.try_get(28)?,
+                    youtube: row.try_get(29)?,
+                    twitter: row.try_get(30)?,
+                    twitch: row.try_get(31)?,
+                    discord: row.try_get(32)?,
+                    instagram: row.try_get(33)?,
+                    tiktok: row.try_get(34)?,
+                    created_at: row.try_get(35)?,
+                    star_rank: row.try_get(36)?,
+                    creator_rank: row.try_get(37)?,
+                    demon_rank: row.try_get(38)?,
+                    user_coin_rank: row.try_get(39)?,
+                    moon_rank: row.try_get(40)?,
+                })
+            },
+            mapper: |it| User::from(it),
         }
     }
 }

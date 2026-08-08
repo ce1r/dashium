@@ -698,7 +698,10 @@ impl GetLevelCountStmt {
 }
 pub struct DeleteLevelStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn delete_level() -> DeleteLevelStmt {
-    DeleteLevelStmt("DELETE FROM levels WHERE id = $1 AND user_id = $2", None)
+    DeleteLevelStmt(
+        "DELETE FROM levels WHERE id = $1 AND user_id = $2 RETURNING id",
+        None,
+    )
 }
 impl DeleteLevelStmt {
     pub async fn prepare<'a, C: GenericClient>(
@@ -708,34 +711,31 @@ impl DeleteLevelStmt {
         self.1 = Some(client.prepare(self.0).await?);
         Ok(self)
     }
-    pub async fn bind<'c, 'a, 's, C: GenericClient>(
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
         &'s self,
         client: &'c C,
         level_id: &'a i32,
         user_id: &'a i32,
-    ) -> Result<u64, tokio_postgres::Error> {
-        client.execute(self.0, &[level_id, user_id]).await
+    ) -> I32Query<'c, 'a, 's, C, i32, 2> {
+        I32Query {
+            client,
+            params: [level_id, user_id],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |row| Ok(row.try_get(0)?),
+            mapper: |it| it,
+        }
     }
 }
-impl<'a, C: GenericClient + Send + Sync>
-    crate::client::async_::Params<
-        'a,
-        'a,
-        'a,
-        DeleteLevelParams,
-        std::pin::Pin<
-            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
-        >,
-        C,
-    > for DeleteLevelStmt
+impl<'c, 'a, 's, C: GenericClient>
+    crate::client::async_::Params<'c, 'a, 's, DeleteLevelParams, I32Query<'c, 'a, 's, C, i32, 2>, C>
+    for DeleteLevelStmt
 {
     fn params(
-        &'a self,
-        client: &'a C,
+        &'s self,
+        client: &'c C,
         params: &'a DeleteLevelParams,
-    ) -> std::pin::Pin<
-        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
-    > {
-        Box::pin(self.bind(client, &params.level_id, &params.user_id))
+    ) -> I32Query<'c, 'a, 's, C, i32, 2> {
+        self.bind(client, &params.level_id, &params.user_id)
     }
 }

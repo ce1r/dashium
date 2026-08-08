@@ -97,3 +97,16 @@ LIMIT 10 OFFSET :offset;
 --! get_user_count
 SELECT COUNT(*)
 FROM levels;
+
+--! get_leaderboard : User
+SELECT *
+FROM user_view
+ORDER BY 
+    CASE :stat::SMALLINT
+        WHEN 1 THEN moon_rank
+        WHEN 2 THEN demon_rank
+        WHEN 3 THEN user_coin_rank
+        WHEN 4 THEN creator_rank
+        ELSE star_rank
+    END ASC
+LIMIT 100;

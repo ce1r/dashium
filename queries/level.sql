@@ -61,4 +61,5 @@ FROM levels;
 --! delete_level
 DELETE FROM levels
 WHERE id = :level_id
-    AND user_id = :user_id;
+    AND user_id = :user_id
+RETURNING id;

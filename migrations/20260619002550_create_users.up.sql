@@ -108,5 +108,10 @@ SELECT
     discord,
     instagram,
     tiktok,
-    created_at
+    created_at,
+    ROW_NUMBER() OVER (ORDER BY stars DESC, id ASC) AS star_rank,
+    ROW_NUMBER() OVER (ORDER BY creator_points DESC, id ASC) AS creator_rank,
+    ROW_NUMBER() OVER (ORDER BY demons DESC, id ASC) AS demon_rank,
+    ROW_NUMBER() OVER (ORDER BY user_coins DESC, id ASC) AS user_coin_rank,
+    ROW_NUMBER() OVER (ORDER BY moons DESC, id ASC) AS moon_rank
 FROM users;
