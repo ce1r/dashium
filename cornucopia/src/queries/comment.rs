@@ -17,6 +17,11 @@ pub struct GetCommentsByLikesParams {
     pub level_id: i32,
     pub offset: i64,
 }
+#[derive(Clone, Copy, Debug)]
+pub struct GetCommentHistoryParams {
+    pub user_id: i32,
+    pub offset: i64,
+}
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Comment {
     pub id: i32,
@@ -77,6 +82,88 @@ impl<'a> From<CommentBorrowed<'a>> for Comment {
             icon_type,
             glow,
         }: CommentBorrowed<'a>,
+    ) -> Self {
+        Self {
+            id,
+            level_id,
+            user_id,
+            body: body.into(),
+            likes,
+            is_spam,
+            created_at,
+            percent,
+            chat_color: chat_color.into(),
+            username: username.into(),
+            role,
+            color1,
+            color2,
+            color3,
+            icon,
+            icon_type,
+            glow,
+        }
+    }
+}
+#[derive(Debug, Clone, PartialEq)]
+pub struct GetCommentHistory {
+    pub id: i32,
+    pub level_id: i32,
+    pub user_id: i32,
+    pub body: String,
+    pub likes: i32,
+    pub is_spam: bool,
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub percent: i16,
+    pub chat_color: String,
+    pub username: String,
+    pub role: crate::types::Role,
+    pub color1: i16,
+    pub color2: i16,
+    pub color3: i16,
+    pub icon: i16,
+    pub icon_type: i16,
+    pub glow: i16,
+}
+pub struct GetCommentHistoryBorrowed<'a> {
+    pub id: i32,
+    pub level_id: i32,
+    pub user_id: i32,
+    pub body: &'a str,
+    pub likes: i32,
+    pub is_spam: bool,
+    pub created_at: chrono::DateTime<chrono::FixedOffset>,
+    pub percent: i16,
+    pub chat_color: &'a str,
+    pub username: &'a str,
+    pub role: crate::types::Role,
+    pub color1: i16,
+    pub color2: i16,
+    pub color3: i16,
+    pub icon: i16,
+    pub icon_type: i16,
+    pub glow: i16,
+}
+impl<'a> From<GetCommentHistoryBorrowed<'a>> for GetCommentHistory {
+    fn from(
+        GetCommentHistoryBorrowed {
+            id,
+            level_id,
+            user_id,
+            body,
+            likes,
+            is_spam,
+            created_at,
+            percent,
+            chat_color,
+            username,
+            role,
+            color1,
+            color2,
+            color3,
+            icon,
+            icon_type,
+            glow,
+        }: GetCommentHistoryBorrowed<'a>,
     ) -> Self {
         Self {
             id,
@@ -179,6 +266,73 @@ where
 {
     pub fn map<R>(self, mapper: fn(CommentBorrowed) -> R) -> CommentQuery<'c, 'a, 's, C, R, N> {
         CommentQuery {
+            client: self.client,
+            params: self.params,
+            query: self.query,
+            cached: self.cached,
+            extractor: self.extractor,
+            mapper,
+        }
+    }
+    pub async fn one(self) -> Result<T, tokio_postgres::Error> {
+        let row =
+            crate::client::async_::one(self.client, self.query, &self.params, self.cached).await?;
+        Ok((self.mapper)((self.extractor)(&row)?))
+    }
+    pub async fn all(self) -> Result<Vec<T>, tokio_postgres::Error> {
+        self.iter().await?.try_collect().await
+    }
+    pub async fn opt(self) -> Result<Option<T>, tokio_postgres::Error> {
+        let opt_row =
+            crate::client::async_::opt(self.client, self.query, &self.params, self.cached).await?;
+        Ok(opt_row
+            .map(|row| {
+                let extracted = (self.extractor)(&row)?;
+                Ok((self.mapper)(extracted))
+            })
+            .transpose()?)
+    }
+    pub async fn iter(
+        self,
+    ) -> Result<
+        impl futures::Stream<Item = Result<T, tokio_postgres::Error>> + 'c,
+        tokio_postgres::Error,
+    > {
+        let stream = crate::client::async_::raw(
+            self.client,
+            self.query,
+            crate::slice_iter(&self.params),
+            self.cached,
+        )
+        .await?;
+        let mapped = stream
+            .map(move |res| {
+                res.and_then(|row| {
+                    let extracted = (self.extractor)(&row)?;
+                    Ok((self.mapper)(extracted))
+                })
+            })
+            .into_stream();
+        Ok(mapped)
+    }
+}
+pub struct GetCommentHistoryQuery<'c, 'a, 's, C: GenericClient, T, const N: usize> {
+    client: &'c C,
+    params: [&'a (dyn postgres_types::ToSql + Sync); N],
+    query: &'static str,
+    cached: Option<&'s tokio_postgres::Statement>,
+    extractor: fn(&tokio_postgres::Row) -> Result<GetCommentHistoryBorrowed, tokio_postgres::Error>,
+    mapper: fn(GetCommentHistoryBorrowed) -> T,
+}
+impl<'c, 'a, 's, C, T: 'c, const N: usize> GetCommentHistoryQuery<'c, 'a, 's, C, T, N>
+where
+    C: GenericClient,
+{
+    pub fn map<R>(
+        self,
+        mapper: fn(GetCommentHistoryBorrowed) -> R,
+    ) -> GetCommentHistoryQuery<'c, 'a, 's, C, R, N> {
+        GetCommentHistoryQuery {
             client: self.client,
             params: self.params,
             query: self.query,
@@ -424,5 +578,76 @@ impl<'c, 'a, 's, C: GenericClient>
         params: &'a GetCommentsByLikesParams,
     ) -> CommentQuery<'c, 'a, 's, C, Comment, 2> {
         self.bind(client, &params.level_id, &params.offset)
+    }
+}
+pub struct GetCommentHistoryStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn get_comment_history() -> GetCommentHistoryStmt {
+    GetCommentHistoryStmt(
+        "SELECT * FROM comment_view WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10 OFFSET $2",
+        None,
+    )
+}
+impl GetCommentHistoryStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        user_id: &'a i32,
+        offset: &'a i64,
+    ) -> GetCommentHistoryQuery<'c, 'a, 's, C, GetCommentHistory, 2> {
+        GetCommentHistoryQuery {
+            client,
+            params: [user_id, offset],
+            query: self.0,
+            cached: self.1.as_ref(),
+            extractor: |
+                row: &tokio_postgres::Row,
+            | -> Result<GetCommentHistoryBorrowed, tokio_postgres::Error> {
+                Ok(GetCommentHistoryBorrowed {
+                    id: row.try_get(0)?,
+                    level_id: row.try_get(1)?,
+                    user_id: row.try_get(2)?,
+                    body: row.try_get(3)?,
+                    likes: row.try_get(4)?,
+                    is_spam: row.try_get(5)?,
+                    created_at: row.try_get(6)?,
+                    percent: row.try_get(7)?,
+                    chat_color: row.try_get(8)?,
+                    username: row.try_get(9)?,
+                    role: row.try_get(10)?,
+                    color1: row.try_get(11)?,
+                    color2: row.try_get(12)?,
+                    color3: row.try_get(13)?,
+                    icon: row.try_get(14)?,
+                    icon_type: row.try_get(15)?,
+                    glow: row.try_get(16)?,
+                })
+            },
+            mapper: |it| GetCommentHistory::from(it),
+        }
+    }
+}
+impl<'c, 'a, 's, C: GenericClient>
+    crate::client::async_::Params<
+        'c,
+        'a,
+        's,
+        GetCommentHistoryParams,
+        GetCommentHistoryQuery<'c, 'a, 's, C, GetCommentHistory, 2>,
+        C,
+    > for GetCommentHistoryStmt
+{
+    fn params(
+        &'s self,
+        client: &'c C,
+        params: &'a GetCommentHistoryParams,
+    ) -> GetCommentHistoryQuery<'c, 'a, 's, C, GetCommentHistory, 2> {
+        self.bind(client, &params.user_id, &params.offset)
     }
 }

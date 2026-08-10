@@ -28,4 +28,9 @@ WHERE level_id = :level_id
 ORDER BY likes DESC
 LIMIT 20 OFFSET :offset;
 
-
+--! get_comment_history
+SELECT *
+FROM comment_view
+WHERE user_id = :user_id
+ORDER BY created_at DESC
+LIMIT 10 OFFSET :offset;
