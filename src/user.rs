@@ -3,6 +3,7 @@ use axum::routing::post;
 
 mod backupGJAccountNew;
 mod getAccountURL;
+mod getGJLevelScores211;
 mod getGJScores20;
 mod getGJUserInfo20;
 mod getGJUsers20;
@@ -50,4 +51,8 @@ pub fn routes() -> Router {
         )
         .route("/getGJUsers20.php", post(getGJUsers20::getGJUsers20))
         .route("/getGJScores20.php", post(getGJScores20::getGJScores20))
+        .route(
+            "/getGJLevelScores211.php",
+            post(getGJLevelScores211::getGJLevelScores211),
+        )
 }

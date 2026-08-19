@@ -833,7 +833,7 @@ impl<'c, 'a, 's, C: GenericClient>
 pub struct DownloadMessageStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn download_message() -> DownloadMessageStmt {
     DownloadMessageStmt(
-        "WITH updated AS ( UPDATE messages SET is_read = TRUE WHERE id = $1 AND target_id = $2 RETURNING * ) SELECT updated.*, u.username FROM updated JOIN users u ON updated.user_id = u.id",
+        "WITH updated AS ( UPDATE messages SET is_read = TRUE WHERE id = $1 AND target_id = $2 RETURNING * ) SELECT updated.*, users.username FROM updated JOIN users ON updated.user_id = users.id",
         None,
     )
 }
@@ -1234,7 +1234,7 @@ impl<'a, C: GenericClient + Send + Sync>
 pub struct GetFriendListStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn get_friend_list() -> GetFriendListStmt {
     GetFriendListStmt(
-        "SELECT u.* FROM users u WHERE u.id IN ( SELECT user2 FROM friendships WHERE user1 = $1 UNION SELECT user1 FROM friendships WHERE user2 = $1 ) ORDER BY u.username ASC",
+        "SELECT users.* FROM users WHERE users.id IN ( SELECT user2 FROM friendships WHERE user1 = $1 UNION SELECT user1 FROM friendships WHERE user2 = $1 ) ORDER BY users.username ASC",
         None,
     )
 }
@@ -1308,7 +1308,7 @@ impl GetFriendListStmt {
 pub struct GetBlockedListStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn get_blocked_list() -> GetBlockedListStmt {
     GetBlockedListStmt(
-        "SELECT u.* FROM users u WHERE u.id IN ( SELECT target_id FROM blocks WHERE user_id = $1 ) ORDER BY u.username ASC",
+        "SELECT users.* FROM users WHERE users.id IN ( SELECT target_id FROM blocks WHERE user_id = $1 ) ORDER BY users.username ASC",
         None,
     )
 }

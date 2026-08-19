@@ -10,12 +10,8 @@ use serde::Deserialize;
 pub struct Data {
     accountID: i32,
     gjp2: String,
-    stars: i32,
-    demons: i32,
     diamonds: i32,
-    moons: i32,
     coins: i32,
-    userCoins: i32,
     accIcon: i16,
     accShip: i16,
     accBall: i16,
@@ -41,12 +37,8 @@ pub async fn updateGJUserScore22(Form(form): Form<Data>) -> Result<impl IntoResp
     let user_id = save_stats()
         .bind(
             &client,
-            &form.stars,
-            &form.demons,
             &form.diamonds,
-            &form.moons,
             &form.coins,
-            &form.userCoins,
             &form.accIcon,
             &form.accShip,
             &form.accBall,

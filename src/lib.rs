@@ -22,7 +22,7 @@ pub use error::Result;
 
 pub fn setup() -> Router {
     Router::new()
-        .nest("/api", api::routes())
+        .nest("/api/v1", api::routes())
         .nest("/api/legacy", gd_routes())
         .layer(TraceLayer::new_for_http())
 }

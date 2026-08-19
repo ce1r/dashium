@@ -28,6 +28,12 @@ pub struct DeleteLevelParams {
     pub level_id: i32,
     pub user_id: i32,
 }
+#[derive(Clone, Copy, Debug)]
+pub struct RateLevelParams {
+    pub level_id: i32,
+    pub rating: crate::types::Rating,
+    pub stars: i16,
+}
 #[derive(Debug, Clone, PartialEq, serde::Serialize)]
 pub struct Level {
     pub id: i32,
@@ -737,5 +743,52 @@ impl<'c, 'a, 's, C: GenericClient>
         params: &'a DeleteLevelParams,
     ) -> I32Query<'c, 'a, 's, C, i32, 2> {
         self.bind(client, &params.level_id, &params.user_id)
+    }
+}
+pub struct RateLevelStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn rate_level() -> RateLevelStmt {
+    RateLevelStmt(
+        "INSERT INTO rates ( level_id, rating, stars ) VALUES ( $1, $2, $3 ) ON CONFLICT (level_id) DO UPDATE SET rating = EXCLUDED.rating, stars = EXCLUDED.stars",
+        None,
+    )
+}
+impl RateLevelStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub async fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        level_id: &'a i32,
+        rating: &'a crate::types::Rating,
+        stars: &'a i16,
+    ) -> Result<u64, tokio_postgres::Error> {
+        client.execute(self.0, &[level_id, rating, stars]).await
+    }
+}
+impl<'a, C: GenericClient + Send + Sync>
+    crate::client::async_::Params<
+        'a,
+        'a,
+        'a,
+        RateLevelParams,
+        std::pin::Pin<
+            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+        >,
+        C,
+    > for RateLevelStmt
+{
+    fn params(
+        &'a self,
+        client: &'a C,
+        params: &'a RateLevelParams,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+    > {
+        Box::pin(self.bind(client, &params.level_id, &params.rating, &params.stars))
     }
 }

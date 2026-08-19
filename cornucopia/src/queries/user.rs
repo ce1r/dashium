@@ -19,12 +19,8 @@ pub struct LoginUserParams<T1: crate::StringSql, T2: crate::StringSql> {
 }
 #[derive(Clone, Copy, Debug)]
 pub struct SaveStatsParams {
-    pub stars: i32,
-    pub demons: i32,
     pub diamonds: i32,
-    pub moons: i32,
     pub secret_coins: i32,
-    pub user_coins: i32,
     pub cube: i16,
     pub ship: i16,
     pub ball: i16,
@@ -68,6 +64,11 @@ pub struct SearchUsersParams<T1: crate::StringSql> {
     pub search: T1,
     pub user_id: i32,
     pub offset: i64,
+}
+#[derive(Clone, Copy, Debug)]
+pub struct UpdateLevelCompletionParams {
+    pub level_id: i32,
+    pub user_id: i32,
 }
 #[derive(Debug, Clone, PartialEq)]
 pub struct Authentication {
@@ -840,7 +841,7 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql, T2: crate::StringSql>
 pub struct SaveStatsStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn save_stats() -> SaveStatsStmt {
     SaveStatsStmt(
-        "UPDATE users SET stars = $1, demons = $2, diamonds = $3, moons = $4, secret_coins = $5, user_coins = $6, cube = $7, ship = $8, ball = $9, ufo = $10, wave = $11, robot = $12, spider = $13, swing = $14, jetpack = $15, glow = $16, explosion = $17, icon = $18, icon_type = $19, color1 = $20, color2 = $21, color3 = $22 WHERE id = $23 RETURNING id",
+        "UPDATE users SET diamonds = $1, secret_coins = $2, cube = $3, ship = $4, ball = $5, ufo = $6, wave = $7, robot = $8, spider = $9, swing = $10, jetpack = $11, glow = $12, explosion = $13, icon = $14, icon_type = $15, color1 = $16, color2 = $17, color3 = $18 WHERE id = $19 RETURNING id",
         None,
     )
 }
@@ -855,12 +856,8 @@ impl SaveStatsStmt {
     pub fn bind<'c, 'a, 's, C: GenericClient>(
         &'s self,
         client: &'c C,
-        stars: &'a i32,
-        demons: &'a i32,
         diamonds: &'a i32,
-        moons: &'a i32,
         secret_coins: &'a i32,
-        user_coins: &'a i32,
         cube: &'a i16,
         ship: &'a i16,
         ball: &'a i16,
@@ -878,16 +875,12 @@ impl SaveStatsStmt {
         color2: &'a i16,
         color3: &'a i16,
         user_id: &'a i32,
-    ) -> I32Query<'c, 'a, 's, C, i32, 23> {
+    ) -> I32Query<'c, 'a, 's, C, i32, 19> {
         I32Query {
             client,
             params: [
-                stars,
-                demons,
                 diamonds,
-                moons,
                 secret_coins,
-                user_coins,
                 cube,
                 ship,
                 ball,
@@ -914,22 +907,18 @@ impl SaveStatsStmt {
     }
 }
 impl<'c, 'a, 's, C: GenericClient>
-    crate::client::async_::Params<'c, 'a, 's, SaveStatsParams, I32Query<'c, 'a, 's, C, i32, 23>, C>
+    crate::client::async_::Params<'c, 'a, 's, SaveStatsParams, I32Query<'c, 'a, 's, C, i32, 19>, C>
     for SaveStatsStmt
 {
     fn params(
         &'s self,
         client: &'c C,
         params: &'a SaveStatsParams,
-    ) -> I32Query<'c, 'a, 's, C, i32, 23> {
+    ) -> I32Query<'c, 'a, 's, C, i32, 19> {
         self.bind(
             client,
-            &params.stars,
-            &params.demons,
             &params.diamonds,
-            &params.moons,
             &params.secret_coins,
-            &params.user_coins,
             &params.cube,
             &params.ship,
             &params.ball,
@@ -1317,7 +1306,7 @@ impl<'c, 'a, 's, C: GenericClient, T1: crate::StringSql>
 }
 pub struct GetUserCountStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn get_user_count() -> GetUserCountStmt {
-    GetUserCountStmt("SELECT COUNT(*) FROM levels", None)
+    GetUserCountStmt("SELECT COUNT(*) FROM users", None)
 }
 impl GetUserCountStmt {
     pub async fn prepare<'a, C: GenericClient>(
@@ -1413,5 +1402,51 @@ impl GetLeaderboardStmt {
             },
             mapper: |it| User::from(it),
         }
+    }
+}
+pub struct UpdateLevelCompletionStmt(&'static str, Option<tokio_postgres::Statement>);
+pub fn update_level_completion() -> UpdateLevelCompletionStmt {
+    UpdateLevelCompletionStmt(
+        "INSERT INTO completions ( level_id, user_id ) VALUES ( $1, $2 ) ON CONFLICT (level_id, user_id) DO NOTHING",
+        None,
+    )
+}
+impl UpdateLevelCompletionStmt {
+    pub async fn prepare<'a, C: GenericClient>(
+        mut self,
+        client: &'a C,
+    ) -> Result<Self, tokio_postgres::Error> {
+        self.1 = Some(client.prepare(self.0).await?);
+        Ok(self)
+    }
+    pub async fn bind<'c, 'a, 's, C: GenericClient>(
+        &'s self,
+        client: &'c C,
+        level_id: &'a i32,
+        user_id: &'a i32,
+    ) -> Result<u64, tokio_postgres::Error> {
+        client.execute(self.0, &[level_id, user_id]).await
+    }
+}
+impl<'a, C: GenericClient + Send + Sync>
+    crate::client::async_::Params<
+        'a,
+        'a,
+        'a,
+        UpdateLevelCompletionParams,
+        std::pin::Pin<
+            Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+        >,
+        C,
+    > for UpdateLevelCompletionStmt
+{
+    fn params(
+        &'a self,
+        client: &'a C,
+        params: &'a UpdateLevelCompletionParams,
+    ) -> std::pin::Pin<
+        Box<dyn futures::Future<Output = Result<u64, tokio_postgres::Error>> + Send + 'a>,
+    > {
+        Box::pin(self.bind(client, &params.level_id, &params.user_id))
     }
 }

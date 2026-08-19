@@ -65,11 +65,22 @@ fn level_string(levels: &[Level]) -> String {
                 Some(DemonDifficulty::Extreme) => 6,
             };
 
+            let difficulty = match l.stars {
+                2 => 10,
+                3 => 20,
+                4 | 5 => 30,
+                6 | 7 => 40,
+                8 | 9 => 50,
+                _ => 0,
+            };
+
             gd_format!(
                 ":",
                 1 => l.id,
                 2 => l.name,
                 6 => l.user_id,
+                8 => 10,
+                9 => difficulty,
                 10 => l.downloads,
                 12 => l.official_song_id,
                 14 => l.likes,

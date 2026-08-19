@@ -57,9 +57,9 @@ WITH updated AS (
     WHERE id = :message_id AND target_id = :target_id
     RETURNING *
 )
-SELECT updated.*, u.username
+SELECT updated.*, users.username
 FROM updated
-JOIN users u ON updated.user_id = u.id;
+JOIN users ON updated.user_id = users.id;
 
 --! delete_messages
 DELETE FROM messages
@@ -116,24 +116,24 @@ INSERT INTO friendships (
 );
 
 --! get_friend_list: User
-SELECT u.*
-FROM users u
-WHERE u.id IN (
+SELECT users.*
+FROM users
+WHERE users.id IN (
     SELECT user2 FROM friendships WHERE user1 = :user_id
     UNION
     SELECT user1 FROM friendships WHERE user2 = :user_id
 )
-ORDER BY u.username ASC;
+ORDER BY users.username ASC;
 
 --! get_blocked_list: User
-SELECT u.*
-FROM users u
-WHERE u.id IN (
+SELECT users.*
+FROM users
+WHERE users.id IN (
     SELECT target_id
     FROM blocks
     WHERE user_id = :user_id
 )
-ORDER BY u.username ASC;
+ORDER BY users.username ASC;
 
 --! delete_friend_requests
 DELETE FROM friend_requests

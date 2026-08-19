@@ -4,6 +4,7 @@ use axum::routing::post;
 mod deleteGJLevelUser20;
 mod downloadGJLevel22;
 mod getGJLevels21;
+mod suggestGJStars20;
 mod uploadGJLevel21;
 
 pub fn routes() -> Router {
@@ -20,5 +21,9 @@ pub fn routes() -> Router {
         .route(
             "/deleteGJLevelUser20.php",
             post(deleteGJLevelUser20::deleteGJLevelUser20),
+        )
+        .route(
+            "/suggestGJStars20.php",
+            post(suggestGJStars20::suggestGJStars20),
         )
 }

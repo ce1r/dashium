@@ -35,7 +35,7 @@ pub async fn uploadGJComment21(Form(form): Form<Data>) -> Result<impl IntoRespon
 
         let cmd = command().run_inner(args.as_slice())?;
 
-        return Command::execute_command(cmd, auth.role);
+        return Command::execute_command(&cmd, auth.role);
     }
 
     let comment_id = create_comment()

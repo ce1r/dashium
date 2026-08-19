@@ -10,7 +10,7 @@ pub enum Command {
 }
 
 impl Command {
-    pub fn execute_command(cmd: Self, role: Role) -> Result<String> {
+    pub fn execute_command(cmd: &Self, role: Role) -> Result<String> {
         match cmd {
             Self::Ping => Ok(Self::ping(role)),
         }

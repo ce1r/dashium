@@ -36,7 +36,7 @@ pub async fn getGJLevelLists(Form(form): Form<Data>) -> Result<impl IntoResponse
             let levels = l
                 .levels
                 .iter()
-                .map(|i| i.to_string())
+                .map(ToString::to_string)
                 .collect::<Vec<_>>()
                 .join(",");
 

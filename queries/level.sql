@@ -63,3 +63,18 @@ DELETE FROM levels
 WHERE id = :level_id
     AND user_id = :user_id
 RETURNING id;
+
+--! rate_level
+INSERT INTO rates (
+    level_id,
+    rating,
+    stars
+) VALUES (
+    :level_id,
+    :rating,
+    :stars
+)
+ON CONFLICT (level_id)
+DO UPDATE SET
+    rating = EXCLUDED.rating,
+    stars = EXCLUDED.stars;

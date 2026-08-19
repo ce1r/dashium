@@ -31,12 +31,8 @@ RETURNING id, hash, salt;
 --! save_stats
 UPDATE users
 SET
-    stars = :stars,
-    demons = :demons,
     diamonds = :diamonds,
-    moons = :moons,
     secret_coins = :secret_coins,
-    user_coins = :user_coins,
 
     cube = :cube,
     ship = :ship,
@@ -96,7 +92,7 @@ LIMIT 10 OFFSET :offset;
 
 --! get_user_count
 SELECT COUNT(*)
-FROM levels;
+FROM users;
 
 --! get_leaderboard : User
 SELECT *
@@ -110,3 +106,13 @@ ORDER BY
         ELSE star_rank
     END ASC
 LIMIT 100;
+
+--! update_level_completion
+INSERT INTO completions (
+    level_id,
+    user_id
+) VALUES (
+    :level_id,
+    :user_id
+)
+ON CONFLICT (level_id, user_id) DO NOTHING;
