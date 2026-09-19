@@ -8,6 +8,7 @@ use cornucopia::queries::level::Level;
 use cornucopia::queries::level::search_levels;
 use cornucopia::types::DemonDifficulty;
 use cornucopia::types::LevelLength;
+use cornucopia::types::Rating;
 use serde::Deserialize;
 use std::fmt::Write;
 
@@ -74,6 +75,13 @@ fn level_string(levels: &[Level]) -> String {
                 _ => 0,
             };
 
+            let rating = match l.rating {
+                Some(Rating::Epic) => 1,
+                Some(Rating::Legendary) => 2,
+                Some(Rating::Mythic) => 3,
+                _ => 0,
+            };
+
             gd_format!(
                 ":",
                 1 => l.id,
@@ -93,6 +101,7 @@ fn level_string(levels: &[Level]) -> String {
                 37 => l.coins,
                 38 => u8::from(l.has_verified_coins),
                 39 => l.requested_stars,
+                42 => rating,
                 43 => demon_difficulty,
                 44 => 0,
                 45 => l.objects,

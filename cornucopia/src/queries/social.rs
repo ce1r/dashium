@@ -1188,7 +1188,7 @@ impl ReadFriendRequestStmt {
 pub struct AcceptFriendRequestStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn accept_friend_request() -> AcceptFriendRequestStmt {
     AcceptFriendRequestStmt(
-        "WITH _ AS ( DELETE FROM friend_requests WHERE user_id = $1 AND target_id = $2 ) INSERT INTO friendships ( user1, user2 ) VALUES ( $1, $2 )",
+        "WITH _ AS ( DELETE FROM friend_requests WHERE user_id = $1 AND target_id = $2 ) INSERT INTO friendships ( user1, user2 ) VALUES ( GREATEST($1, $2), LEAST($1, $2) )",
         None,
     )
 }
@@ -1428,7 +1428,7 @@ impl<'a, C: GenericClient + Send + Sync, T1: crate::ArraySql<Item = i32>>
 pub struct RemoveFriendStmt(&'static str, Option<tokio_postgres::Statement>);
 pub fn remove_friend() -> RemoveFriendStmt {
     RemoveFriendStmt(
-        "DELETE FROM friendships WHERE (user1, user2) IN (($1, $2), ($2, $1))",
+        "DELETE FROM friendships WHERE user1 = GREATEST($1::INTEGER, $2::INTEGER) AND user2 = LEAST($1::INTEGER, $2::INTEGER)",
         None,
     )
 }

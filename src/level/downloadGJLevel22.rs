@@ -11,6 +11,7 @@ use cornucopia::queries::level::Level;
 use cornucopia::queries::level::get_level;
 use cornucopia::types::DemonDifficulty;
 use cornucopia::types::LevelLength;
+use cornucopia::types::Rating;
 use serde::Deserialize;
 use tokio::fs;
 
@@ -38,6 +39,15 @@ pub async fn downloadGJLevel22(Form(form): Form<Data>) -> Result<impl IntoRespon
         LevelLength::XL => 4,
     };
 
+    let difficulty = match level.stars {
+        2 => 10,
+        3 => 20,
+        4 | 5 => 30,
+        6 | 7 => 40,
+        8 | 9 => 50,
+        _ => 0,
+    };
+
     let demon_difficulty = match level.demon_difficulty {
         Some(DemonDifficulty::Easy) => 3,
         Some(DemonDifficulty::Medium) => 4,
@@ -50,13 +60,21 @@ pub async fn downloadGJLevel22(Form(form): Form<Data>) -> Result<impl IntoRespon
         .to_string()
         .replace(" ago", "");
 
+    let rating = match level.rating {
+        Some(Rating::Epic) => 1,
+        Some(Rating::Legendary) => 2,
+        Some(Rating::Mythic) => 3,
+        _ => 0,
+    };
+
     let response = gd_format!(
         ":",
         1 => level.id,
         2 => level.name,
         4 => level_string,
         6 => level.user_id,
-        8 => u8::from(level.is_featured),
+        8 => 10,
+        9 => difficulty,
         10 => level.downloads,
         12 => level.official_song_id,
         14 => level.likes,
@@ -74,6 +92,7 @@ pub async fn downloadGJLevel22(Form(form): Form<Data>) -> Result<impl IntoRespon
         38 => u8::from(level.has_verified_coins),
         39 => level.requested_stars,
         40 => u8::from(level.is_ldm),
+        42 => rating,
         43 => demon_difficulty,
         44 => 0,
         45 => level.objects,

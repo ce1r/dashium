@@ -111,17 +111,23 @@ INSERT INTO friendships (
     user1,
     user2
 ) VALUES (
-    :user_id,
-    :target_id
+    GREATEST(:user_id, :target_id),
+    LEAST(:user_id, :target_id)
 );
 
 --! get_friend_list: User
 SELECT users.*
 FROM users
 WHERE users.id IN (
-    SELECT user2 FROM friendships WHERE user1 = :user_id
+    SELECT user2
+    FROM friendships
+    WHERE user1 = :user_id
+
     UNION
-    SELECT user1 FROM friendships WHERE user2 = :user_id
+
+    SELECT user1
+    FROM friendships
+    WHERE user2 = :user_id
 )
 ORDER BY users.username ASC;
 
@@ -142,5 +148,5 @@ WHERE user_id = :user_id
 
 --! remove_friend
 DELETE FROM friendships
-WHERE (user1, user2)
-IN ((:user_id, :target_id), (:target_id, :user_id));
+WHERE user1 = GREATEST(:user_id::INTEGER, :target_id::INTEGER)
+    AND user2 = LEAST(:user_id::INTEGER, :target_id::INTEGER);

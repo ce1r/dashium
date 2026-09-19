@@ -24,7 +24,6 @@ pub struct Data {
     levelString: String,
 
     levelVersion: i32,
-    original: i32,
 
     levelLength: u8,
     objects: i32,
@@ -72,7 +71,6 @@ pub async fn uploadGJLevel21(Form(form): Form<Data>) -> Result<impl IntoResponse
             &form.levelName,
             &description,
             &form.levelVersion,
-            &form.original,
             &level_length,
             &form.objects,
             &form.requestedStars,
